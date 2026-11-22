@@ -150,7 +150,7 @@ struct MachineCard: View {
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
                 .frame(width: 44, height: 44)
-                .background(.fill.tertiary, in: Circle())
+                .background(Color(.tertiarySystemFill), in: Circle())
         }
         .tint(.primary)
         // A control, not content: it stays a control's size at the largest

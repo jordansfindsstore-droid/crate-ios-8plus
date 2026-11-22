@@ -63,7 +63,7 @@ final class PairingCodePictureInPicture: NSObject {
         silence = nil
         controller?.canStartPictureInPictureAutomaticallyFromInline = false
         controller?.stopPictureInPicture()
-        layer.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
+        layer.flushAndRemoveImage()
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -124,9 +124,8 @@ final class PairingCodePictureInPicture: NSObject {
 
     private func draw() {
         guard let buffer = Self.render(text) else { return }
-        let renderer = layer.sampleBufferRenderer
-        if renderer.status == .failed { renderer.flush() }
-        renderer.enqueue(buffer)
+        if layer.status == .failed { layer.flush() }
+        layer.enqueue(buffer)
     }
 
     private static func render(_ text: (title: String, code: String, note: String)) -> CMSampleBuffer? {

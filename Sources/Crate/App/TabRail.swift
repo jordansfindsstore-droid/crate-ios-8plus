@@ -3,7 +3,6 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import SwiftUI
-import os
 
 /// The tabs as a vertical bar in a column on the right, drawn to match the one
 /// the system puts in the closed Duo's status column.
@@ -33,12 +32,12 @@ struct TabRail: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
-                        .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+                        .foregroundColor(isSelected ? .accentColor : .primary)
                         .frame(width: 62, height: 56)
                         .background {
                             if isSelected {
                                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                    .fill(.fill.secondary)
+                                    .fill(Color(.secondarySystemGroupedBackground))
                             }
                         }
                         .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -84,46 +83,6 @@ struct FoldSignals: Equatable {
 extension View {
     /// Keeps `signals` current. Does nothing before iOS 27.1, which has no Duo.
     func readFoldSignals(_ signals: Binding<FoldSignals>) -> some View {
-        modifier(FoldSignalReader(signals: signals))
-    }
-}
-
-private struct FoldSignalReader: ViewModifier {
-    @Binding var signals: FoldSignals
-
-    func body(content: Content) -> some View {
-        if #available(iOS 27.1, *) {
-            content.modifier(HingeReader(signals: $signals))
-        } else {
-            content
-        }
-    }
-}
-
-@available(iOS 27.1, *)
-private struct HingeReader: ViewModifier {
-    @Binding var signals: FoldSignals
-    @Environment(\.toolbarVerticalEdge) private var verticalEdge
-
-    private static let log = Logger(subsystem: "com.amendez.crate", category: "layout")
-
-    func body(content: Content) -> some View {
-        content
-            .onAppear {
-                signals.verticalEdge = verticalEdge
-                Self.log.notice("vertical edge: \(String(describing: verticalEdge), privacy: .public)")
-            }
-            .onChange(of: verticalEdge) { edge in
-                signals.verticalEdge = edge
-                Self.log.notice("vertical edge: \(String(describing: edge), privacy: .public)")
-            }
-            .onHingeChange { _, new in
-                // A nil hinge means this view stopped getting updates (it's
-                // moving), not that the device lost its hinge.
-                guard let hinge = new.hinge else { return }
-                signals.hasHinge = true
-                signals.isClosed = hinge.status == .closed
-                Self.log.notice("hinge: \(String(describing: hinge.status), privacy: .public)")
-            }
+        self
     }
 }

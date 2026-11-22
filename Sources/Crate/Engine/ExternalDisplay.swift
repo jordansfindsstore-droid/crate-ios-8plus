@@ -168,30 +168,12 @@ struct ExternalDisplayRegistration: UIViewControllerRepresentable {
 
     static func dismantleUIViewController(_ registrar: Registrar, coordinator: ()) {
         ExternalDisplay.shared.show(nil)
-        registrar.unregister()
     }
 
     final class Registrar: UIViewController {
-        /// The UISceneAccessoryRegistration, from iOS 27.
-        private var registration: AnyObject?
-
         override func viewDidLoad() {
             super.viewDidLoad()
             view.isUserInteractionEnabled = false
-            guard #available(iOS 27.0, *) else { return }
-            // Info.plist's configuration for the role, with its delegate named
-            // here too, so it doesn't depend on the name being found there.
-            let configuration = UISceneConfiguration(name: "External Display",
-                                                     sessionRole: .windowExternalDisplayNonInteractive)
-            configuration.delegateClass = ExternalDisplaySceneDelegate.self
-            registration = registerSceneAccessory(.externalNonInteractive(sceneConfiguration: configuration))
-        }
-
-        func unregister() {
-            if #available(iOS 27.0, *), let registration = registration as? UISceneAccessoryRegistration {
-                unregisterSceneAccessory(registration)
-            }
-            registration = nil
         }
     }
 }

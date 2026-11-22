@@ -117,13 +117,8 @@ struct MachineScreen: View {
                 Toggle("Terminal", systemImage: "apple.terminal", isOn: shows(.console))
             }
             if showing == .display {
-                if #available(iOS 27.0, *) {
-                    keyboardItem.visibilityPriority(.high)
-                    ToolbarOverflowMenu { screenshotButton }
-                } else {
-                    keyboardItem
-                    ToolbarItem(placement: .secondaryAction) { screenshotButton }
-                }
+                keyboardItem
+                ToolbarItem(placement: .secondaryAction) { screenshotButton }
             }
         } else {
             ToolbarItem(placement: .cancellationAction) {
@@ -290,15 +285,6 @@ struct MachineScreen: View {
     /// they span the fold, the smaller change. `folds` is read so this is
     /// asked again each time the hinge moves.
     private static func aboveFold(in proxy: GeometryProxy, after folds: Int) -> CGRect? {
-        guard #available(iOS 27.1, *) else { return nil }
-        for fold in proxy.reservedRegions(kind: .division) where fold.isActive {
-            let frame = fold.frame
-            if frame.width > frame.height, frame.minY > proxy.size.height / 4 {
-                // With the keyboard up the view may already end above it.
-                return CGRect(x: 0, y: 0, width: proxy.size.width,
-                              height: min(frame.minY, proxy.size.height))
-            }
-        }
         return nil
     }
 
@@ -437,30 +423,7 @@ private struct FollowsHinge: ViewModifier {
     @Binding var isOpen: Bool
 
     func body(content: Content) -> some View {
-        if #available(iOS 27.1, *) {
-            content.modifier(HingeReader(folds: $folds, isOpen: $isOpen))
-        } else {
-            content
-        }
-    }
-}
-
-@available(iOS 27.1, *)
-private struct HingeReader: ViewModifier {
-    @Binding var folds: Int
-    @Binding var isOpen: Bool
-    @State private var status: DeviceHinge.Status?
-
-    func body(content: Content) -> some View {
-        content.onHingeChange { _, new in
-            // No hinge means this view stopped getting updates as it moves,
-            // not that the hinge went: compared with the last one there was.
-            guard let hinge = new.hinge, hinge.status != status else { return }
-            status = hinge.status
-            isOpen = hinge.status != .closed
-            AppLog.write("hinge: \(hinge.status)")
-            folds += 1
-        }
+        content
     }
 }
 
@@ -473,26 +436,7 @@ private struct UnderSideBar: ViewModifier {
     let isOn: Bool
 
     func body(content: Content) -> some View {
-        if #available(iOS 27.1, *) {
-            content.modifier(UnderVerticalBar(isOn: isOn))
-        } else {
-            content
-        }
-    }
-}
-
-@available(iOS 27.1, *)
-private struct UnderVerticalBar: ViewModifier {
-    let isOn: Bool
-    @Environment(\.toolbarVerticalEdge) private var verticalEdge
-
-    func body(content: Content) -> some View {
-        content.ignoresSafeArea(.container, edges: edges)
-    }
-
-    private var edges: Edge.Set {
-        guard isOn, let verticalEdge else { return [] }
-        return verticalEdge == .leading ? .leading : .trailing
+        content
     }
 }
 
@@ -503,22 +447,6 @@ private struct MachineTitle: ViewModifier {
     let title: String
 
     func body(content: Content) -> some View {
-        if #available(iOS 27.1, *) {
-            content.modifier(TitleUnlessBarsVertical(title: title))
-        } else {
-            content.navigationTitle(title)
-        }
-    }
-}
-
-@available(iOS 27.1, *)
-private struct TitleUnlessBarsVertical: ViewModifier {
-    let title: String
-    @Environment(\.toolbarVerticalEdge) private var verticalEdge
-
-    func body(content: Content) -> some View {
-        content
-            .navigationTitle(title)
-            .toolbar(removing: verticalEdge == nil ? nil : .title)
+        content.navigationTitle(title)
     }
 }

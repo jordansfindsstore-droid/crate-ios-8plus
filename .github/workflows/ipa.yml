@@ -38,6 +38,16 @@ jobs:
               echo "tag $GITHUB_REF_NAME, but project.yml says $versions" >&2; exit 1; }
       - name: Install XcodeGen
         run: brew install xcodegen meson pkg-config
+      - name: Cache iOS 16 frameworks and build sources
+        uses: actions/cache@v4
+        with:
+          path: |
+            Frameworks/
+            .deps/src/
+            crate-src/target/
+          key: ios16-frameworks-${{ hashFiles('Scripts/build-idevice.sh', 'Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-${{ github.ref }}
+          restore-keys: |
+            ios16-frameworks-${{ hashFiles('Scripts/build-idevice.sh', 'Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-
       - name: Frameworks
         env:
           GH_TOKEN: ${{ github.token }}
