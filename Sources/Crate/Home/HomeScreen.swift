@@ -6,8 +6,8 @@ import SwiftUI
 
 /// The installed VMs, one large card each, paging vertically.
 struct HomeScreen: View {
-    @Environment(MachineStore.self) private var store
-    @Environment(MachineRunner.self) private var runner
+    @EnvironmentObject private var store: MachineStore
+    @EnvironmentObject private var runner: MachineRunner
 
     let onStart: (Machine) -> Void
     let onInstall: () -> Void
@@ -32,7 +32,7 @@ struct HomeScreen: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My VMs")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: onShowJIT) {
                         JITBadge()
                     }
@@ -70,28 +70,25 @@ struct HomeScreen: View {
     }
 
     private var cards: some View {
-        ScrollView {
-            LazyVStack(spacing: 20) {
-                ForEach(store.machines) { machine in
-                    MachineCard(
-                        machine: machine,
-                        onStart: { onStart(machine) },
-                        onEditSettings: { editing = machine },
-                        onDelete: { deleting = machine })
-                    // At the accessibility text sizes a card grows to fit its text.
-                    .frame(height: typeSize.isAccessibilitySize ? nil : cardHeight)
+        GeometryReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 20) {
+                    ForEach(store.machines) { machine in
+                        MachineCard(
+                            machine: machine,
+                            onStart: { onStart(machine) },
+                            onEditSettings: { editing = machine },
+                            onDelete: { deleting = machine })
+                        // At the accessibility text sizes a card grows to fit its text.
+                        .frame(height: typeSize.isAccessibilitySize ? nil : cardHeight)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
-            .scrollTargetLayout()
+            .onAppear { fixCardHeight(for: Viewport(proxy)) }
+            .onChange(of: proxy.size) { _ in fixCardHeight(for: Viewport(proxy)) }
         }
-        .scrollTargetBehavior(.viewAligned)
-        .onGeometryChange(for: Viewport.self) { proxy in
-            Viewport(proxy)
-        } action: { viewport in
-            fixCardHeight(for: viewport)
-        }
-        .contentMargins(.horizontal, 16, for: .scrollContent)
-        .contentMargins(.vertical, 12, for: .scrollContent)
     }
 }
 
@@ -115,7 +112,7 @@ private struct Viewport: Equatable {
 /// it doesn't, a spinner while it's being checked or turned on. Color is never
 /// the only sign: the label says it too.
 struct JITBadge: View {
-    @Environment(JITSession.self) private var jit
+    @EnvironmentObject private var jit: JITSession
     @ScaledMetric(relativeTo: .subheadline) private var dotSize = 8
 
     var body: some View {
@@ -143,11 +140,15 @@ struct EmptyHome: View {
     let onInstall: () -> Void
 
     var body: some View {
-        ContentUnavailableView {
-            Label("No VMs Yet", systemImage: "shippingbox")
-        } description: {
+        VStack(spacing: 12) {
+            Image(systemName: "shippingbox")
+                .font(.largeTitle)
+                .foregroundColor(.secondary)
+            Text("No VMs Yet")
+                .font(.title2.weight(.semibold))
             Text("Install Debian or Arch Linux to get started. It downloads once, then runs right on this iPhone.")
-        } actions: {
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
             Button(action: onInstall) {
                 Label("Install a VM", systemImage: "arrow.down.circle.fill")
                     .font(.headline)
@@ -157,5 +158,7 @@ struct EmptyHome: View {
             .buttonBorderShape(.capsule)
             .controlSize(.large)
         }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

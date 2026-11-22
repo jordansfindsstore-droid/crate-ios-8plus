@@ -3,15 +3,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import Foundation
-import Observation
+import Combine
 
 /// The installed VMs.
 ///
 /// Persisted to UserDefaults as JSON; each VM's files are in its own folder
 /// (GuestFiles).
-@Observable
-final class MachineStore {
-    private(set) var machines: [Machine] {
+final class MachineStore: ObservableObject {
+    @Published private(set) var machines: [Machine] {
         didSet { save() }
     }
 

@@ -30,7 +30,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 /// The three tabs, and the running VM over them.
 struct RootView: View {
-    @Environment(JITSession.self) private var jit
+    @EnvironmentObject private var jit: JITSession
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(SettingsKey.jitAtLaunch) private var jitAtLaunch = true
     @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
@@ -70,33 +70,35 @@ struct RootView: View {
             MachineScreen(machine: machine)
         }
         // Over the tabs; the VM screen, when it's up, shows its own.
-        .sheet(isPresented: running == nil ? Bindable(jit).showingSetup : .constant(false)) {
+        .sheet(isPresented: Binding(
+            get: { running == nil && jit.showingSetup },
+            set: { if !$0 { jit.showingSetup = false } })) {
             JITSetupView()
-                .environment(jit)
         }
         .task { openLaunchTab() }
-        .onChange(of: jit.state, initial: true) { launchSettled() }
+        .onAppear { launchSettled() }
+        .onChange(of: jit.state) { _ in launchSettled() }
         // Back from LocalDevVPN, if turning JIT on was waiting for it.
-        .onChange(of: scenePhase) { if scenePhase == .active { jit.cameToFront() } }
+        .onChange(of: scenePhase) { phase in if phase == .active { jit.cameToFront() } }
     }
 
     private var tabs: some View {
         TabView(selection: $tab) {
-            Tab(AppTab.home.title, systemImage: AppTab.home.systemImage, value: .home) {
-                HomeScreen(
-                    onStart: { running = $0 },
-                    onInstall: { tab = .install },
-                    onShowJIT: { tab = .settings })
+            HomeScreen(
+                onStart: { running = $0 },
+                onInstall: { tab = .install },
+                onShowJIT: { tab = .settings })
+                .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.systemImage) }
+                .tag(AppTab.home)
                 .toolbar(usesRail ? .hidden : .automatic, for: .tabBar)
-            }
-            Tab(AppTab.install.title, systemImage: AppTab.install.systemImage, value: .install) {
-                InstallScreen(onShowHome: { tab = .home })
-                    .toolbar(usesRail ? .hidden : .automatic, for: .tabBar)
-            }
-            Tab(AppTab.settings.title, systemImage: AppTab.settings.systemImage, value: .settings) {
-                SettingsScreen()
-                    .toolbar(usesRail ? .hidden : .automatic, for: .tabBar)
-            }
+            InstallScreen(onShowHome: { tab = .home })
+                .tabItem { Label(AppTab.install.title, systemImage: AppTab.install.systemImage) }
+                .tag(AppTab.install)
+                .toolbar(usesRail ? .hidden : .automatic, for: .tabBar)
+            SettingsScreen()
+                .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
+                .tag(AppTab.settings)
+                .toolbar(usesRail ? .hidden : .automatic, for: .tabBar)
         }
     }
 
@@ -118,5 +120,12 @@ struct RootView: View {
 
 extension EnvironmentValues {
     /// iPhone Duo: what only applies to its hinge, folds and side bars shows.
-    @Entry var hasHinge = false
+    var hasHinge: Bool {
+        get { self[HasHingeKey.self] }
+        set { self[HasHingeKey.self] = newValue }
+    }
+}
+
+private struct HasHingeKey: EnvironmentKey {
+    static let defaultValue = false
 }

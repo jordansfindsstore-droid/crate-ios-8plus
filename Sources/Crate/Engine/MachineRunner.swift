@@ -3,8 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import CrateEngine
+import Combine
 import Foundation
-import Observation
 
 /// The VM that's running, on crate (Frameworks/Crate.xcframework, built from
 /// the crate repository by Scripts/build-crate.sh).
@@ -17,8 +17,8 @@ import Observation
 /// a virtio keyboard and tablet; DisplayBridge carries frames out and input in.
 /// The network is user-mode, through libslirp (Scripts/build-slirp.sh): the
 /// guest gets 10.0.2.15 by DHCP and reaches the internet through crate.
-@MainActor @Observable
-final class MachineRunner {
+@MainActor
+final class MachineRunner: ObservableObject {
     enum Phase: Equatable {
         case idle
         case starting
@@ -27,9 +27,9 @@ final class MachineRunner {
         case failed(String)
     }
 
-    private(set) var phase = Phase.idle
+    @Published private(set) var phase = Phase.idle
     /// The VM this runner is running, or last ran.
-    private(set) var machineID: Machine.ID?
+    @Published private(set) var machineID: Machine.ID?
     let console = ConsoleBridge()
     let display = DisplayBridge()
     private var machine: OpaquePointer?

@@ -7,8 +7,8 @@ import SwiftUI
 /// Pick a system image from the catalog and a memory limit, give the account
 /// to make in it, then install it.
 struct InstallScreen: View {
-    @Environment(MachineStore.self) private var store
-    @Environment(Installer.self) private var installer
+    @EnvironmentObject private var store: MachineStore
+    @EnvironmentObject private var installer: Installer
     @Environment(\.dynamicTypeSize) private var typeSize
 
     let onShowHome: () -> Void
@@ -117,7 +117,7 @@ struct InstallScreen: View {
             }
             .task { await loadCatalog() }
             .refreshable { await loadCatalog() }
-            .onChange(of: selectedID) {
+            .onChange(of: selectedID) { _ in
                 // A finished install belongs to the image it was for.
                 if case .done = installer.phase { installer.reset() }
             }

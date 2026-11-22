@@ -109,7 +109,11 @@ private struct HingeReader: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: verticalEdge, initial: true) { _, edge in
+            .onAppear {
+                signals.verticalEdge = verticalEdge
+                Self.log.notice("vertical edge: \(String(describing: verticalEdge), privacy: .public)")
+            }
+            .onChange(of: verticalEdge) { edge in
                 signals.verticalEdge = edge
                 Self.log.notice("vertical edge: \(String(describing: edge), privacy: .public)")
             }

@@ -9,7 +9,7 @@ import SwiftUI
 struct MachineSettingsSheet: View {
     let machine: Machine
 
-    @Environment(MachineStore.self) private var store
+    @EnvironmentObject private var store: MachineStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.hasHinge) private var hasHinge
 

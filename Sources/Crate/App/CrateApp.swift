@@ -6,13 +6,13 @@ import SwiftUI
 
 @main
 struct CrateApp: App {
-    @State private var store: MachineStore
-    @State private var jit: JITSession
+    @StateObject private var store: MachineStore
+    @StateObject private var jit: JITSession
     /// crate runs one VM per process: this is the one.
-    @State private var runner = MachineRunner()
+    @StateObject private var runner = MachineRunner()
     /// Here rather than on the Install screen, so an install carries on while
     /// another tab shows.
-    @State private var installer = Installer()
+    @StateObject private var installer = Installer()
     private let options: LaunchOptions
 
     init() {
@@ -26,21 +26,21 @@ struct CrateApp: App {
         let store = MachineStore()
         if options.empty { store.removeAll() }
         if options.samples { store.restoreSamples() }
-        _store = State(initialValue: store)
+        _store = StateObject(wrappedValue: store)
         // First, while a debugger that will leave once it has authorized the
         // code region is still attached.
         let jit = JITSession()
         jit.start()
-        _jit = State(initialValue: jit)
+        _jit = StateObject(wrappedValue: jit)
     }
 
     var body: some Scene {
         WindowGroup {
             RootView(launchTab: options.tab, forceRail: options.rail)
-                .environment(store)
-                .environment(jit)
-                .environment(runner)
-                .environment(installer)
+                .environmentObject(store)
+                .environmentObject(jit)
+                .environmentObject(runner)
+                .environmentObject(installer)
         }
     }
 }

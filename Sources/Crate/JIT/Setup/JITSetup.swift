@@ -3,12 +3,13 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import SwiftUI
+import Combine
 
 /// What Built-in StikJIT needs, step by step, and the actions that get each:
 /// this iPhone paired with crate, LocalDevVPN connected, and Apple's developer
 /// disk image mounted. JITSetupView shows it.
-@MainActor @Observable
-final class JITSetup {
+@MainActor
+final class JITSetup: ObservableObject {
     enum Pairing: Equatable {
         case idle
         /// Getting ready to advertise.
@@ -26,15 +27,15 @@ final class JITSetup {
         case failed(String)
     }
 
-    private(set) var hasPairingFile = PairingFile.exists
-    private(set) var pairing = Pairing.idle
+    @Published private(set) var hasPairingFile = PairingFile.exists
+    @Published private(set) var pairing = Pairing.idle
     /// Nil while checking.
-    private(set) var tunnel: LocalDevVPN.Tunnel?
+    @Published private(set) var tunnel: LocalDevVPN.Tunnel?
     /// The port the Remote Pairing service answered on, for the helper, when
     /// it isn't the usual one (LocalDevVPN.Check.portForHelper).
     private var port: UInt16?
-    private(set) var preparation = Preparation.idle
-    var importError: String?
+    @Published private(set) var preparation = Preparation.idle
+    @Published var importError: String?
 
     let pictureInPicture = PairingCodePictureInPicture()
     private var host: OnDevicePairing?

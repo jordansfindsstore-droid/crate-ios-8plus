@@ -8,11 +8,11 @@ import UniformTypeIdentifiers
 /// "Set Up JIT": the steps Built-in StikJIT needs, each with its status and
 /// the action that gets it, then Turn On JIT.
 struct JITSetupView: View {
-    @Environment(JITSession.self) private var jit
+    @EnvironmentObject private var jit: JITSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
-    @State private var setup = JITSetup()
+    @StateObject private var setup = JITSetup()
     @State private var importing = false
     @State private var confirmingForget = false
 
@@ -51,10 +51,10 @@ struct JITSetupView: View {
                 setup.importFile($0)
             }
             .task { await setup.checkTunnel() }
-            .onChange(of: scenePhase) {
+            .onChange(of: scenePhase) { phase in
                 AppLog.write("jit: setup: crate is \(scenePhase == .active ? "in front" : scenePhase == .background ? "in the background" : "inactive")")
                 // Back from LocalDevVPN or Settings.
-                if scenePhase == .active {
+                if phase == .active {
                     setup.returnedToFront()
                     Task { await setup.checkTunnel() }
                 }

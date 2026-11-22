@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import Foundation
-import Observation
+import Combine
 
 /// Whether this launch of crate has JIT, and the code region it claimed.
 ///
@@ -19,8 +19,8 @@ import Observation
 /// in Settings, by stopping on `brk #0x69` (the convention StikDebug's
 /// legacy.js answers, as does the built-in enabler), and keeps that region
 /// until it quits. A later VM gets the same region.
-@MainActor @Observable
-final class JITSession {
+@MainActor
+final class JITSession: ObservableObject {
     enum State: Equatable {
         case checking
         case off(OffReason)
@@ -38,10 +38,10 @@ final class JITSession {
         case notEligible
     }
 
-    private(set) var state = State.checking
+    @Published private(set) var state = State.checking
 
     /// The region itself, for the engine, once claimed.
-    private(set) var region: crate_code_region?
+    @Published private(set) var region: crate_code_region?
 
     var isOn: Bool {
         if case .on = state { return true }
@@ -64,20 +64,20 @@ final class JITSession {
     }
 
     /// What the last attempt to turn JIT on said went wrong, if it did.
-    var enablerError: String?
-    var isTurningOn = false
+    @Published var enablerError: String?
+    @Published var isTurningOn = false
     /// What the built-in helper said stopped it, while turning on.
-    var helperFailure: String?
+    @Published var helperFailure: String?
     /// Turning on stopped because LocalDevVPN wasn't connected: it's tried
     /// again when crate is next in front (`cameToFront()`).
-    var waitingForVPN = false
+    @Published var waitingForVPN = false
     /// How many times crate has come to the front, so a check of the tunnel
     /// can tell if crate came back from LocalDevVPN while it ran.
-    var cameToFrontCount = 0
+    @Published var cameToFrontCount = 0
     /// Built-in StikJIT isn't set up yet: shows the Set Up JIT sheet.
-    var showingSetup = false
+    @Published var showingSetup = false
     /// Whether Built-in StikJIT has a pairing, for Settings' Set Up JIT row.
-    private(set) var isPaired = PairingFile.exists
+    @Published private(set) var isPaired = PairingFile.exists
 
     /// Re-reads `isPaired` after Set Up JIT may have changed it.
     func pairingChanged() {

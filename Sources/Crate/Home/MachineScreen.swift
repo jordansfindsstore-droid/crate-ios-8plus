@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import SwiftUI
+import UIKit
 
 /// A VM, full screen. With JIT on it boots in crate and shows either its screen
 /// or its console, a terminal on the serial port, with a switch between them
@@ -10,10 +11,10 @@ import SwiftUI
 struct MachineScreen: View {
     let machine: Machine
 
-    @Environment(MachineStore.self) private var store
+    @EnvironmentObject private var store: MachineStore
     @Environment(\.dismiss) private var dismiss
-    @Environment(JITSession.self) private var jit
-    @Environment(MachineRunner.self) private var runner
+    @EnvironmentObject private var jit: JITSession
+    @EnvironmentObject private var runner: MachineRunner
     @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
 
     @State private var confirmingStop = false
@@ -74,7 +75,10 @@ struct MachineScreen: View {
                         .presentationDetents([.medium, .large])
                         .ignoresSafeArea()
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: screenshot?.id)
+                .onChange(of: screenshot?.id) { identifier in
+                    guard identifier != nil else { return }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
         }
         // A connected display shows the VM's screen while this is up, the
         // console included (ExternalDisplay).
@@ -82,9 +86,10 @@ struct MachineScreen: View {
         .preferredColorScheme(.dark)
         .modifier(FollowsHinge(folds: $folds, isOpen: $isOpen))
         .task(id: jit.isOn) { boot() }
-        .sheet(isPresented: Bindable(jit).showingSetup) {
+        .sheet(isPresented: Binding(
+            get: { jit.showingSetup },
+            set: { if !$0 { jit.showingSetup = false } })) {
             JITSetupView()
-                .environment(jit)
                 .preferredColorScheme(nil)
         }
     }
@@ -235,7 +240,7 @@ struct MachineScreen: View {
             let open = Self.aboveFold(in: proxy, after: folds)
             DisplayView(bridge: runner.display, showsKeyboard: $showsKeyboard,
                         hasPicture: $hasPicture, openRegion: open)
-                .onChange(of: open) { _, open in Self.log(open, in: proxy.size) }
+                .onChange(of: open) { open in Self.log(open, in: proxy.size) }
         }
         // The keyboard covers the desktop rather than resizing it, which the
         // guest would redo its layout for.
@@ -268,7 +273,8 @@ struct MachineScreen: View {
             let open = Self.aboveFold(in: proxy, after: folds)
             ConsoleView(bridge: runner.console, keyboardRequests: keyboardRequests)
                 .frame(width: proxy.size.width, height: open?.height ?? proxy.size.height)
-                .onChange(of: open, initial: true) { _, open in
+                .onAppear { Self.log(open, in: proxy.size) }
+                .onChange(of: open) { open in
                     Self.log(open, in: proxy.size)
                     if open != nil, keyboardRaisedAtFold != folds {
                         keyboardRaisedAtFold = folds

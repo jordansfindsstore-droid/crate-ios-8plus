@@ -6,7 +6,7 @@ import SwiftUI
 
 /// JIT, memory, logs and the licenses.
 struct SettingsScreen: View {
-    @Environment(JITSession.self) private var jit
+    @EnvironmentObject private var jit: JITSession
 
     @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
     @AppStorage(SettingsKey.jitAtLaunch) private var jitAtLaunch = true
@@ -171,7 +171,7 @@ struct SettingsScreen: View {
     private var logsSection: some View {
         Section {
             Toggle("Collect Logs", isOn: $logsEnabled)
-                .onChange(of: logsEnabled) { _, on in
+                .onChange(of: logsEnabled) { on in
                     AppLog.setEnabled(on)
                     logURL = on ? LogExport.prepare() : nil
                 }

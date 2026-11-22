@@ -3,9 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import Compression
+import Combine
 import CryptoKit
 import Foundation
-import Observation
 import UIKit
 
 /// Installs a catalog image as a new VM: downloads its kernel, initrd and
@@ -16,8 +16,7 @@ import UIKit
 /// The download runs while crate is open, with the screen kept awake; leaving
 /// crate stops it, and its files go at the next launch (MachineStore).
 @MainActor
-@Observable
-final class Installer {
+final class Installer: ObservableObject {
     enum Phase: Equatable, Sendable {
         case idle
         /// Bytes downloaded so far of all there is to download.
@@ -29,8 +28,8 @@ final class Installer {
         case failed(String)
     }
 
-    private(set) var phase = Phase.idle
-    private(set) var image: CatalogImage?
+    @Published private(set) var phase = Phase.idle
+    @Published private(set) var image: CatalogImage?
     private var task: Task<Void, Never>?
 
     var isBusy: Bool {
