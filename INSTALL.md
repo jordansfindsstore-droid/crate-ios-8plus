@@ -11,17 +11,18 @@ it expires.
 1. Install Apple's [iTunes for Windows](https://www.apple.com/itunes/) and
    [iloader](https://github.com/nab138/iloader/releases). The iloader project
    documents iTunes as its Windows USB device service and lists SideStore
-   installation as a supported action. Only download iloader from its
-   [official site](https://iloader.app) or
+   installation as a supported action. iLoader does not support 32-bit Windows
+   or Windows 10 ARM. Only download iloader from its [official
+   site](https://iloader.app) or
    [GitHub releases](https://github.com/nab138/iloader/releases).
-2. Connect the iPhone by USB, unlock it, and trust the computer if prompted.
-   In iloader, choose its SideStore install action and follow
+2. On the iPhone, install LocalDevVPN separately from its official App Store
+   distribution and connect it before using SideStore to install, update, or
+   refresh apps. Use it only as a personal-use external app: this project does
+   not bundle, modify, or redistribute it.
+3. Connect the iPhone by USB, unlock it, and trust the computer if prompted.
+   Then use iloader's SideStore install action and follow
    [SideStore's setup](https://docs.sidestore.io/), including any pairing or
    Apple ID steps it requests.
-3. SideStore documents LocalDevVPN as part of its remote-debug integration.
-   Install LocalDevVPN separately from its official App Store distribution and
-   follow SideStore's setup instructions. Use it only as a personal-use
-   external app: this project does not bundle, modify, or redistribute it.
 4. Download the `crate-8plus.ipa` artifact from the repository's **iOS 16 IPA**
    Actions run. In SideStore, install that IPA and let SideStore finish signing
    and installing it. The unsigned IPA itself is not a ready-to-install signed
