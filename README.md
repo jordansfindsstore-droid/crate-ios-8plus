@@ -155,6 +155,11 @@ debugger, picked in Settings:
   (or takes a pairing file), with [idevice](https://github.com/jkcoxson/idevice)
   (MIT), built from source with one patch (`Scripts/patches`).
 
+The private iOS 16 / iPhone 8 Plus port omits the built-in helper (StikJIT
+requires iOS 17.4+) and uses Sideloadly's external JIT action on Windows.
+StikDebug also requires iOS 17.4+, so it is not an iOS 16 option. See
+[INSTALL.md](INSTALL.md).
+
 Each launch logs its JIT steps to `Library/Caches/crate.log`, and pairing's
 messages to `Library/Caches/idevice.log`.
 

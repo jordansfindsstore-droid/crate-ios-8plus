@@ -20,6 +20,9 @@ extension JITSession {
 
         let asked: Bool
         switch method {
+        case .sideloadly:
+            fail("Enable JIT for crate from Sideloadly on the connected Windows PC.")
+            return
         case .stikDebug:
             asked = await askStikDebug()
         case .builtInStikJIT:

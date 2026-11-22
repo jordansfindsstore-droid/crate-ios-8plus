@@ -6,6 +6,27 @@ attached to. So each [release](https://github.com/oneamendez/crate-ios/releases)
 has an unsigned IPA, `crate-unsigned.ipa`, and you sign it with your own Apple
 account on a Mac, then install it on your iPhone or iPad.
 
+## iPhone 8 Plus on iOS 16 (Windows)
+
+This port uses Sideloadly for both signing/installing and enabling JIT. Sideloadly
+lists support for JIT through iOS 16; StikDebug requires iOS 17.4 or later.
+
+1. Install [Sideloadly for Windows](https://sideloadly.io/) and connect the
+   iPhone by USB. Unlock it and tap **Trust** when asked. Enable Developer Mode
+   on the iPhone at **Settings > Privacy & Security > Developer Mode**.
+2. Drag `crate-8plus.ipa` into Sideloadly, choose the iPhone, enter your Apple
+   ID, and start sideloading. A free Apple ID signature expires after 7 days;
+   Sideloadly can refresh it. Trust the developer profile in
+   **Settings > General > VPN & Device Management** if iOS asks.
+3. Keep the iPhone connected to Windows. From Sideloadly's tray/daemon menu,
+   choose **Enable JIT**, then select crate. Sideloadly says this opens the app
+   and enables JIT. Repeat after crate exits; JIT does not persist across
+   launches.
+
+Sideloading can succeed without the memory entitlements; iOS may then give
+crate less memory. Use the 1–2 GB VM settings first. This path has not yet been
+tested on an iPhone 8 Plus.
+
 ## The quick way: ask Claude Code
 
 On a Mac with Xcode, with your iPhone connected by cable, start

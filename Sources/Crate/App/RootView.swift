@@ -112,7 +112,8 @@ struct RootView: View {
     private func launchSettled() {
         guard !didLaunch, jit.state != .checking else { return }
         didLaunch = true
-        if !jit.isOn, jit.state == .off(.noDebugger), jitAtLaunch {
+        if !jit.isOn, jit.state == .off(.noDebugger), jitAtLaunch,
+           JITMethod(rawValue: jitMethod) != .sideloadly {
             Task { await jit.turnOn(JITMethod(rawValue: jitMethod) ?? .standard, interactive: false) }
         }
     }

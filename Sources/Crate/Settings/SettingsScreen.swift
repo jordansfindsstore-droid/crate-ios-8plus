@@ -44,7 +44,7 @@ struct SettingsScreen: View {
                     Text(statusText)
                 }
             }
-            if !jit.isOn {
+            if !jit.isOn, selectedMethod != .sideloadly {
                 Button {
                     Task { await jit.turnOn(JITMethod(rawValue: jitMethod) ?? .standard) }
                 } label: {
@@ -58,12 +58,14 @@ struct SettingsScreen: View {
                 }
                 .disabled(jit.isTurningOn || jit.state == .checking || jit.state == .off(.notEligible))
             }
-            Picker("Method", selection: $jitMethod) {
-                ForEach(JITMethod.allCases) { method in
-                    Text(method.title).tag(method.rawValue)
+            if JITMethod.allCases.count > 1 {
+                Picker("Method", selection: $jitMethod) {
+                    ForEach(JITMethod.allCases) { method in
+                        Text(method.title).tag(method.rawValue)
+                    }
                 }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
             if selectedMethod == .builtInStikJIT {
                 Button {
                     jit.showingSetup = true
@@ -75,7 +77,9 @@ struct SettingsScreen: View {
                     }
                 }
             }
-            Toggle("Turn on JIT when crate opens", isOn: $jitAtLaunch)
+            if selectedMethod != .sideloadly {
+                Toggle("Turn on JIT when crate opens", isOn: $jitAtLaunch)
+            }
             Picker("Code region", selection: $codeRegionMB) {
                 ForEach(CodeRegion.choices, id: \.self) { mb in
                     Text("\(mb) MB").tag(mb)
@@ -120,6 +124,8 @@ struct SettingsScreen: View {
             parts.append("Built-in StikJIT needs this iPhone paired with crate and LocalDevVPN connected. Set Up JIT walks through both.")
         case .stikDebug:
             parts.append("StikDebug opens, asks you to confirm, then brings you back to crate.")
+        case .sideloadly:
+            parts.append("Connect this iPhone to Windows and use Sideloadly's Enable JIT action for crate. Sideloadly lists JIT support through iOS 16.")
         }
         parts.append("crate needs JIT to run a VM. The code region is the memory set aside for translated code, claimed once per launch, so a change applies the next time crate opens.")
         return parts.joined(separator: "\n\n")
