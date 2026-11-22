@@ -79,8 +79,8 @@ jobs:
         with:
           name: crate-8plus
           path: |
-          ${{ runner.temp }}/out/crate-8plus.ipa
-          ${{ runner.temp }}/out/crate-8plus.ipa.sha256
+            ${{ runner.temp }}/out/crate-8plus.ipa
+            ${{ runner.temp }}/out/crate-8plus.ipa.sha256
       - name: Release
         if: github.ref_type == 'tag'
         working-directory: ${{ runner.temp }}/out
@@ -91,7 +91,7 @@ jobs:
           cat > notes.md <<EOF
           crate $GITHUB_REF_NAME for iPhone and iPad, unsigned: sign it with your own Apple account, then install it. [INSTALL.md]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/INSTALL.md) has the steps, and a request to paste into Claude Code, which does them for you.
 
-          Built from $GITHUB_SHA with crate $(cat "$GITHUB_WORKSPACE/Frameworks/Crate.version") and $(cat "$GITHUB_WORKSPACE/Frameworks/Frameworks.version"), each attested.
+          Built from $GITHUB_SHA with crate $(cat "$GITHUB_WORKSPACE/Frameworks/Crate.version"), rebuilt for iOS 16.
 
               SHA-256 $(cut -d' ' -f1 crate-8plus.ipa.sha256)
           EOF
