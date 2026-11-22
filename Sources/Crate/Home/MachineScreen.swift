@@ -7,7 +7,7 @@ import UIKit
 
 /// A VM, full screen. With JIT on it boots in crate and shows either its screen
 /// or its console, a terminal on the serial port, with a switch between them
-/// in the toolbar. Without JIT it offers to turn it on.
+/// in the toolbar. Without JIT it explains how to enable it in SideStore.
 struct MachineScreen: View {
     let machine: Machine
 
@@ -15,8 +15,6 @@ struct MachineScreen: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var jit: JITSession
     @EnvironmentObject private var runner: MachineRunner
-    @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
-
     @State private var confirmingStop = false
     @State private var showing = Showing.display
     @State private var showsKeyboard = false
@@ -86,12 +84,6 @@ struct MachineScreen: View {
         .preferredColorScheme(.dark)
         .modifier(FollowsHinge(folds: $folds, isOpen: $isOpen))
         .task(id: jit.isOn) { boot() }
-        .sheet(isPresented: Binding(
-            get: { jit.showingSetup },
-            set: { if !$0 { jit.showingSetup = false } })) {
-            JITSetupView()
-                .preferredColorScheme(nil)
-        }
     }
 
     private var isRunning: Bool {
@@ -309,24 +301,20 @@ struct MachineScreen: View {
                 .foregroundStyle(.yellow)
             Text("JIT Is Off")
                 .font(.title2.bold())
-            Text("crate needs JIT to run \(machine.name). Turn it on, then the VM starts.")
+            Text("crate needs JIT to run \(machine.name). Enable JIT for crate in SideStore, then return here.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             Button {
-                Task { await jit.turnOn(JITMethod(rawValue: jitMethod) ?? .standard) }
+                Task { await jit.check() }
             } label: {
-                if jit.isTurningOn {
-                    ProgressView().frame(maxWidth: .infinity)
-                } else {
-                    Label("Turn On JIT", systemImage: "bolt.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                }
+                Label("Check JIT Status", systemImage: "arrow.clockwise")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .controlSize(.large)
-            .disabled(jit.isTurningOn)
+            .disabled(jit.state == .checking)
         }
         .padding(24)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))

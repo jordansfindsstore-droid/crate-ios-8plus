@@ -7,18 +7,18 @@ import Combine
 
 /// Whether this launch of crate has JIT, and the code region it claimed.
 ///
-/// JIT on iOS is a property of the process, not a setting: it is on when a
-/// debugger has attached to crate, which sets `CS_DEBUGGED` and relaxes iOS's
-/// rule against writing code and then running it. Only builds signed for
-/// development can be attached to (`get-task-allow`), which is why crate can't
-/// come from the App Store. The flag dies with the process, so every launch
-/// starts without it until something attaches again.
+/// SideStore attaches its debugger to crate on iOS 16. The attachment sets
+/// `CS_DEBUGGED`, which relaxes iOS's rule against writing code and then
+/// running it. Only builds signed for development can be attached to
+/// (`get-task-allow`), which is why crate can't come from the App Store. The
+/// flag dies with the process, so every launch starts without it until
+/// SideStore attaches again.
 ///
 /// Since iOS 26 attaching isn't enough: the pages code runs from must also be
 /// authorized by the debugger. crate asks once per launch, for the size chosen
-/// in Settings, by stopping on `brk #0x69` (the convention StikDebug's
-/// legacy.js answers, as does the built-in enabler), and keeps that region
-/// until it quits. A later VM gets the same region.
+/// in Settings, by stopping on `brk #0x69`, and keeps that region until it
+/// quits. On iOS 16, `needsAuthorization` is false and this trap is not
+/// executed. A later VM gets the same region.
 @MainActor
 final class JITSession: ObservableObject {
     enum State: Equatable {
@@ -31,8 +31,8 @@ final class JITSession: ObservableObject {
     enum OffReason: Equatable {
         /// Nothing has attached this launch. The usual case.
         case noDebugger
-        /// Something attached and left without authorizing the code region:
-        /// StikDebug with a script other than legacy.js does this.
+        /// On iOS 26 and later, the debugger left before authorizing the code
+        /// region.
         case debuggerLeft
         /// This build can never be attached to (no get-task-allow).
         case notEligible
@@ -50,10 +50,9 @@ final class JITSession: ObservableObject {
 
     /// Why JIT isn't on, when there's more to say than "nothing attached".
     var problem: String? {
-        if let enablerError { return enablerError }
         switch state {
         case .off(.debuggerLeft):
-            return "A debugger turned JIT on but left without authorizing crate's code region. If it was StikDebug, choose the legacy.js script for crate in StikDebug."
+            return "A debugger attached but left before authorizing crate's code region. Enable JIT for crate again."
         case .off(.notEligible):
             return "This copy of crate can't use JIT: it wasn't signed for development, so nothing can attach to it."
         case .failed(let message):
@@ -63,26 +62,7 @@ final class JITSession: ObservableObject {
         }
     }
 
-    /// What the last attempt to turn JIT on said went wrong, if it did.
-    @Published var enablerError: String?
-    @Published var isTurningOn = false
-    /// What the built-in helper said stopped it, while turning on.
-    @Published var helperFailure: String?
-    /// Turning on stopped because LocalDevVPN wasn't connected: it's tried
-    /// again when crate is next in front (`cameToFront()`).
-    @Published var waitingForVPN = false
-    /// How many times crate has come to the front, so a check of the tunnel
-    /// can tell if crate came back from LocalDevVPN while it ran.
-    @Published var cameToFrontCount = 0
-    /// Built-in StikJIT isn't set up yet: shows the Set Up JIT sheet.
-    @Published var showingSetup = false
-    /// Whether Built-in StikJIT has a pairing, for Settings' Set Up JIT row.
-    @Published private(set) var isPaired = PairingFile.exists
-
-    /// Re-reads `isPaired` after Set Up JIT may have changed it.
-    func pairingChanged() {
-        isPaired = PairingFile.exists
-    }
+    private var isChecking = false
 
     /// Checks at launch: when a debugger is already attached (crate was
     /// started from one), claims the region in the background.
@@ -94,6 +74,9 @@ final class JITSession: ObservableObject {
     /// a region is claimed it stays for the launch, so this does nothing more.
     func check() async {
         if case .on = state { return }
+        guard !isChecking else { return }
+        isChecking = true
+        defer { isChecking = false }
         state = .checking
         let sizeMB = UserDefaults.standard.object(forKey: SettingsKey.codeRegionMB) as? Int ?? CodeRegion.standard
         let (state, region) = await Task.detached(priority: .userInitiated) {
@@ -101,15 +84,6 @@ final class JITSession: ObservableObject {
         }.value
         self.state = state
         self.region = region
-    }
-
-    /// Whether a debugger is attached that can authorize the region: on iOS 26
-    /// and later it has to still be there (traced), earlier CS_DEBUGGED is enough.
-    nonisolated static var debuggerReady: Bool {
-        var flags: UInt32 = 0
-        guard crate_jit_cs_flags(&flags), flags & csDebugged != 0 else { return false }
-        if #available(iOS 26, *) { return crate_jit_traced() }
-        return true
     }
 
     // MARK: - Claiming
@@ -179,7 +153,7 @@ final class JITSession: ObservableObject {
         case CRATE_REGION_OK:
             break
         case CRATE_REGION_REFUSED:
-            return failure("The debugger refused to authorize crate's code region. If it's StikDebug, choose the legacy.js script for crate.")
+            return failure("The debugger refused to authorize crate's code region. Enable JIT for crate again.")
         case CRATE_REGION_REMAP_FAILED:
             return failure("iOS wouldn't map the code region a second time for writing.")
         default:

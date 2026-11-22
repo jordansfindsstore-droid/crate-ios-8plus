@@ -117,7 +117,7 @@ struct JITBadge: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            if jit.isTurningOn || jit.state == .checking {
+            if jit.state == .checking {
                 ProgressView()
                     .controlSize(.mini)
             } else {
@@ -130,7 +130,7 @@ struct JITBadge: View {
                 .foregroundStyle(jit.isOn ? .primary : .secondary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(jit.isOn ? "JIT is on" : jit.isTurningOn ? "Turning JIT on" : "JIT is off")
+        .accessibilityLabel(jit.state == .checking ? "Checking JIT status" : jit.isOn ? "JIT is on" : "JIT is off")
         .accessibilityHint("Shows JIT settings")
     }
 }

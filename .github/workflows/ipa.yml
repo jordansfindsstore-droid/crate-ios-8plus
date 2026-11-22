@@ -3,9 +3,8 @@
 # (vX.Y), as a release. Install it with Scripts/sign-ipa.sh, which signs it
 # with this team's certificate and profiles, or sign it with any other.
 #
-# The libraries come prebuilt and pinned, as Scripts/fetch-*.sh get them on a
-# Mac: the frameworks release of this repository, and StikJIT's and crate's own
-# releases.
+# The workflow builds the crate engine and network frameworks from pinned
+# source. Optional GPU frameworks can be fetched or built separately.
 name: ipa
 on:
   push:
@@ -45,14 +44,13 @@ jobs:
             Frameworks/
             .deps/src/
             crate-src/target/
-          key: ios16-frameworks-${{ hashFiles('Scripts/build-idevice.sh', 'Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-${{ github.ref }}
+          key: ios16-frameworks-${{ hashFiles('Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-${{ github.ref }}
           restore-keys: |
-            ios16-frameworks-${{ hashFiles('Scripts/build-idevice.sh', 'Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-
+            ios16-frameworks-${{ hashFiles('Scripts/build-slirp.sh', 'Scripts/build-crate.sh') }}-
       - name: Frameworks
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          Scripts/build-idevice.sh
           Scripts/build-slirp.sh
           CRATE_DIR="$GITHUB_WORKSPACE/crate-src" Scripts/build-crate.sh
       - name: Build

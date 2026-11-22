@@ -19,3 +19,13 @@ Crate.xcodeproj/
 *.log
 Frameworks/
 .deps/
+
+# Device pairing and signing credentials
+pairingFile.plist
+*.mobiledevicepairing
+*.mobileprovision
+*.p12
+*.pfx
+*.pem
+*.key
+*.p8

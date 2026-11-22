@@ -62,11 +62,6 @@ COMPONENTS = [
     ("crate", pinned("fetch-crate.sh", "VERSION"), "MPL-2.0",
      "https://github.com/oneamendez/crate/tree/" + pinned("fetch-crate.sh", "VERSION"),
      "the VM engine, linked into the app", []),
-    ("StikJIT", pinned("fetch-stikjit.sh", "VERSION"), "MPL-2.0",
-     "https://github.com/StikDebug/StikJIT/tree/" + pinned("fetch-stikjit.sh", "VERSION"),
-     "the JIT helper's framework, from its release; it carries its own build of idevice", []),
-    ("idevice", "0.1.68", "MIT", "https://github.com/jkcoxson/idevice",
-     "linked into the app, built with one patch", [DEPS / "idevice/LICENSE.txt"]),
     ("SwiftTerm", "1.18.0", "MIT", "https://github.com/migueldeicaza/SwiftTerm",
      "linked into the app", [REPO / "build/SourcePackages/checkouts/SwiftTerm/LICENSE"]),
     ("libslirp", "4.9.7", "BSD-3-Clause", "https://gitlab.freedesktop.org/slirp/libslirp",
@@ -115,7 +110,6 @@ COMPONENTS = [
 RUST = [
     # (who links them, checkout, package, features as built)
     ("crate", CRATE, "crate-ffi", None),
-    ("idevice", DEPS / "idevice", "idevice-ffi", pinned("build-idevice.sh", "FEATURES")),
 ]
 
 LICENSE_NAME = re.compile(r"^(LICEN[CS]E|COPYING|UNLICENSE|NOTICE)", re.I)
@@ -180,7 +174,7 @@ def main():
     for owner, root, package, features in RUST:
         for p in rust_packages(root, package, features):
             rust.setdefault((p["name"], p["version"]), (p, set()))[1].add(owner)
-    out += ["", "Rust libraries linked into crate and idevice:", "",
+    out += ["", "Rust libraries linked into crate:", "",
             "| Crate | Version | License | Linked into |", "|---|---|---|---|"]
     for (name, version), (p, owners) in sorted(rust.items()):
         out.append("| [%s](https://crates.io/crates/%s) | %s | %s | %s |"

@@ -45,9 +45,9 @@ static uint64_t ask_debugger_to_authorize(void *start, size_t size) {
 #endif
 }
 
-/* StikJIT's and StikDebug's scripts send each page's address to debugserver in
-   9 hex digits, so they authorize only pages below 64 GiB: above, they write
-   to the wrong address, and running from the region kills the process. */
+/* Debugger scripts send each page's address to debugserver in 9 hex digits, so
+   they authorize only pages below 64 GiB: above, they write to the wrong
+   address, and running from the region kills the process. */
 #define AUTHORIZABLE_END (64ULL << 30)
 
 uint64_t crate_code_region_first_offer;

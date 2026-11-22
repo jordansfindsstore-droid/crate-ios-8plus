@@ -54,35 +54,13 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
-        # Built-in StikJIT's pairing file lives in Documents/StikJIT, where
-        # idevice_pair and Finder can put it as well as Settings' importer.
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
-        # The JIT helper finds the iPhone's Remote Pairing service over Bonjour
-        # when LocalDevVPN's usual address doesn't answer.
-        NSLocalNetworkUsageDescription: crate looks for this iPhone's Remote Pairing service to turn on JIT.
         # Screenshots of a VM's screen go into Photos; crate adds, never reads.
         NSPhotoLibraryAddUsageDescription: crate saves screenshots of your VMs to Photos.
-        # ...and pairs this iPhone with crate by advertising as a computer.
-        NSBonjourServices:
-          - _remotepairing._tcp
-          - _remotepairing-pairable-host._tcp
-        LSApplicationQueriesSchemes:
-          - stikdebug
-          - localdevvpn
-        # LocalDevVPN comes back to crate:// once it has connected.
-        CFBundleURLTypes:
-          - CFBundleURLName: com.amendez.crate
-            CFBundleURLSchemes:
-              - crate
-        # Picture in Picture, which floats the pairing code over Settings and
-        # keeps crate running while the person types it there.
         UIBackgroundModes:
           - audio
     dependencies:
-      # idevice, built from source by Scripts/build-idevice.sh: pairing on the iPhone.
-      - framework: Frameworks/IDevice.xcframework
-        embed: false
       # crate, the VM engine, built by Scripts/build-crate.sh; `import CrateEngine`.
       - framework: Frameworks/Crate.xcframework
         embed: false
@@ -128,7 +106,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.amendez.crate
-        DEVELOPMENT_TEAM: L29MY952CB
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY[sdk=iphoneos*]: Apple Development
         MARKETING_VERSION: "0.1.5"
@@ -145,6 +122,6 @@ targets:
         # to the simulator SDK: unscoped, it produces an app a device refuses.
         CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
         CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
-        # idevice is built for Apple silicon Simulators only.
+        # crate's engine is built for Apple silicon Simulators only.
         EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 

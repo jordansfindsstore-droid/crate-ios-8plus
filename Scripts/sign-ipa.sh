@@ -11,13 +11,10 @@
 #     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-8plus.ipa                 # writes crate-signed.ipa beside it
 #     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-8plus.ipa --install UDID  # and installs it
 #
-# BUNDLE_ID is the app's bundle ID under your team (com.amendez.crate, this
-# project's, if unset); the JIT helper inside it becomes BUNDLE_ID.jithelper.
-# Each is signed with a development profile from ~/Library: one for its own
-# bundle ID if there is one, otherwise your team's wildcard profile. The team
-# is the app profile's. PROFILE and HELPER_PROFILE name .mobileprovision files
-# to use instead, and IDENTITY a certificate (by default the keychain's
-# development certificate that the app profile lists).
+# BUNDLE_ID is the app's bundle ID under your Apple account (com.amendez.crate,
+# this project's, if unset). PROFILE names a .mobileprovision to use instead,
+# and IDENTITY a certificate (by default the keychain's development certificate
+# that the profile lists).
 #
 # Both get get-task-allow, which turning JIT on needs: the debugger attaches
 # to crate. The app also gets the increased-memory-limit and
@@ -26,7 +23,6 @@
 set -euo pipefail
 
 BUNDLE_ID="${BUNDLE_ID:-com.amendez.crate}"
-HELPER_ID="$BUNDLE_ID.jithelper"
 MEMORY_ENTITLEMENTS="com.apple.developer.kernel.increased-memory-limit com.apple.developer.kernel.extended-virtual-addressing"
 
 IPA="$(cd "$(dirname "${1:?usage: BUNDLE_ID=com.you.crate $0 IPA [--install DEVICE]}")" && pwd)/$(basename "$1")"
@@ -104,19 +100,14 @@ entitlements_for() {
 
 ditto -x -k "$IPA" "$WORK/ipa"
 APP="$(echo "$WORK"/ipa/Payload/*.app)"
-HELPER="$APP/PlugIns/CrateJITHelper.appex"
-[ -d "$HELPER" ] || { echo "no CrateJITHelper.appex in $IPA" >&2; exit 1; }
+[ -d "$APP" ] || { echo "no app bundle in $IPA" >&2; exit 1; }
 
 app_profile="${PROFILE:-$(profile_for "$BUNDLE_ID")}"
 TEAM="$(profile_value "$app_profile" TeamIdentifier.0)"
-helper_profile="${HELPER_PROFILE:-$(profile_for "$HELPER_ID" "$TEAM")}"
 IDENTITY="${IDENTITY:-$(identity_for "$app_profile")}"
 echo "app:    $BUNDLE_ID, $(profile_value "$app_profile" Name) (team $TEAM)"
-echo "helper: $HELPER_ID, $(profile_value "$helper_profile" Name)"
 
-# The bundle IDs the profiles are for, in place of the ones the IPA was built with.
 plutil -replace CFBundleIdentifier -string "$BUNDLE_ID" "$APP/Info.plist"
-plutil -replace CFBundleIdentifier -string "$HELPER_ID" "$HELPER/Info.plist"
 
 # codesign, quiet unless it fails.
 sign() {
@@ -124,13 +115,10 @@ sign() {
     out="$(codesign --force --sign "$IDENTITY" --timestamp=none "$@" 2>&1)" || { echo "$out" >&2; return 1; }
 }
 
-# Inside out: every embedded framework, then the helper, then the app.
-for framework in "$HELPER"/Frameworks/*.framework "$APP"/Frameworks/*.framework; do
+# Inside out: every embedded framework, then the app.
+for framework in "$APP"/Frameworks/*.framework; do
     [ -e "$framework" ] && sign "$framework"
 done
-entitlements_for "$HELPER_ID" "$helper_profile"
-cp "$helper_profile" "$HELPER/embedded.mobileprovision"
-sign --entitlements "$WORK/$HELPER_ID.entitlements" "$HELPER"
 entitlements_for "$BUNDLE_ID" "$app_profile" memory
 cp "$app_profile" "$APP/embedded.mobileprovision"
 sign --entitlements "$WORK/$BUNDLE_ID.entitlements" "$APP"

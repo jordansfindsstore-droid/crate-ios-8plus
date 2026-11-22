@@ -4,32 +4,9 @@
 
 import Foundation
 
-/// How Crate gets JIT turned on for itself.
-enum JITMethod: String, CaseIterable, Identifiable {
-    case builtInStikJIT
-    case stikDebug
-    case sideloadly
-
-    var id: Self { self }
-
-    static var allCases: [JITMethod] { [.sideloadly] }
-
-    var title: String {
-        switch self {
-        case .builtInStikJIT: "Built-in StikJIT"
-        case .stikDebug: "StikDebug"
-        case .sideloadly: "Sideloadly (Windows)"
-        }
-    }
-
-    static let standard = Self.sideloadly
-}
-
 /// The settings Crate keeps in UserDefaults, by key, so every `@AppStorage`
 /// that reads one spells it the same way.
 enum SettingsKey {
-    static let jitMethod = "jit.method"
-    static let jitAtLaunch = "jit.turnOnAtLaunch"
     static let codeRegionMB = "jit.codeRegionMB"
     static let installMemoryGB = "install.memoryGB"
     static let installDiskGB = "install.diskGB"

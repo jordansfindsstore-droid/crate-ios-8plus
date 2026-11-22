@@ -32,13 +32,10 @@ enum AppTab: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject private var jit: JITSession
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage(SettingsKey.jitAtLaunch) private var jitAtLaunch = true
-    @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
 
     /// Crate reopens on the tab it was left on.
     @SceneStorage("tab") private var tab = AppTab.home
     @State private var running: Machine?
-    @State private var didLaunch = false
     @State private var fold = FoldSignals()
     /// A tab to open on regardless, from a launch argument.
     private let launchTab: AppTab?
@@ -70,16 +67,11 @@ struct RootView: View {
             MachineScreen(machine: machine)
         }
         // Over the tabs; the VM screen, when it's up, shows its own.
-        .sheet(isPresented: Binding(
-            get: { running == nil && jit.showingSetup },
-            set: { if !$0 { jit.showingSetup = false } })) {
-            JITSetupView()
-        }
         .task { openLaunchTab() }
-        .onAppear { launchSettled() }
-        .onChange(of: jit.state) { _ in launchSettled() }
-        // Back from LocalDevVPN, if turning JIT on was waiting for it.
-        .onChange(of: scenePhase) { phase in if phase == .active { jit.cameToFront() } }
+        // SideStore may attach while crate is in the background.
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { Task { await jit.check() } }
+        }
     }
 
     private var tabs: some View {
@@ -106,17 +98,6 @@ struct RootView: View {
         if let launchTab { tab = launchTab }
     }
 
-    /// With nothing attached and "Turn on JIT when crate opens" set, JIT goes
-    /// on at launch, once the launch's own check settles. No VM starts by
-    /// itself: that's left to Start.
-    private func launchSettled() {
-        guard !didLaunch, jit.state != .checking else { return }
-        didLaunch = true
-        if !jit.isOn, jit.state == .off(.noDebugger), jitAtLaunch,
-           JITMethod(rawValue: jitMethod) != .sideloadly {
-            Task { await jit.turnOn(JITMethod(rawValue: jitMethod) ?? .standard, interactive: false) }
-        }
-    }
 }
 
 extension EnvironmentValues {

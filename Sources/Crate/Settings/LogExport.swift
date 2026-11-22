@@ -22,7 +22,6 @@ enum LogExport {
             "memory: physical \(Format.memory(memory.physical)), "
                 + "available \(memory.available.map { Format.memory($0) } ?? "n/a"), "
                 + "footprint \(Format.memory(memory.footprint))",
-            "jit method: \(UserDefaults.standard.string(forKey: SettingsKey.jitMethod) ?? JITMethod.standard.rawValue)",
             "",
             "== This launch ==",
             AppLog.contents(),

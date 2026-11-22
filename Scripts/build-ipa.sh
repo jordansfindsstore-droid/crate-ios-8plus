@@ -9,8 +9,8 @@
 #
 #     ./Scripts/build-ipa.sh [OUT]     # default build/crate-8plus.ipa
 #
-# Needs Frameworks/ (Scripts/fetch-frameworks.sh, fetch-stikjit.sh and
-# fetch-crate.sh, or the build scripts) and XcodeGen.
+# Needs Frameworks/ (Scripts/fetch-frameworks.sh and fetch-crate.sh, or the
+# build scripts) and XcodeGen.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"

@@ -1,5 +1,5 @@
-# Builds the frameworks the app links (idevice, libslirp and GLib, and the GPU
-# stack: MoltenVK, ANGLE, libepoxy, virglrenderer) from source with the
+# Builds the frameworks the app links (libslirp and GLib, and the GPU stack:
+# MoltenVK, ANGLE, libepoxy, virglrenderer) from source with the
 # Scripts/build-*.sh scripts, and publishes them as a frameworks release with
 # Scripts/release-frameworks.sh, attested: the release Scripts/fetch-frameworks.sh
 # and the ipa workflow fetch. Pin the VERSION and SHA256 it prints there.
@@ -34,7 +34,6 @@ jobs:
       - run: brew install meson pkg-config
       # virglrenderer's build reads YAML with Python.
       - run: python3 -m pip install --quiet --break-system-packages pyyaml
-      - run: Scripts/build-idevice.sh
       - run: Scripts/build-slirp.sh
       - run: Scripts/build-moltenvk.sh
       - run: Scripts/build-angle.sh

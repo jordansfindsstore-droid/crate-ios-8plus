@@ -16,8 +16,7 @@
    False if iOS wouldn't say. */
 bool crate_jit_cs_flags(uint32_t *flags);
 
-/* Whether a debugger is tracing this process right now (P_TRACED): the one that
-   would answer `brk #0x69`. */
+/* Whether a debugger is tracing this process right now (P_TRACED). */
 bool crate_jit_traced(void);
 
 typedef struct {

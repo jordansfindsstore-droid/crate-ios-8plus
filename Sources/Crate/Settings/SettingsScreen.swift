@@ -8,8 +8,6 @@ import SwiftUI
 struct SettingsScreen: View {
     @EnvironmentObject private var jit: JITSession
 
-    @AppStorage(SettingsKey.jitMethod) private var jitMethod = JITMethod.standard.rawValue
-    @AppStorage(SettingsKey.jitAtLaunch) private var jitAtLaunch = true
     @AppStorage(SettingsKey.codeRegionMB) private var codeRegionMB = CodeRegion.standard
     @AppStorage(SettingsKey.logsEnabled) private var logsEnabled = true
     @AppStorage(SettingsKey.logsTrackMemory) private var trackMemory = true
@@ -44,42 +42,6 @@ struct SettingsScreen: View {
                     Text(statusText)
                 }
             }
-            if !jit.isOn, selectedMethod != .sideloadly {
-                Button {
-                    Task { await jit.turnOn(JITMethod(rawValue: jitMethod) ?? .standard) }
-                } label: {
-                    HStack {
-                        Label("Turn On JIT", systemImage: "bolt.fill")
-                        if jit.isTurningOn {
-                            Spacer()
-                            ProgressView()
-                        }
-                    }
-                }
-                .disabled(jit.isTurningOn || jit.state == .checking || jit.state == .off(.notEligible))
-            }
-            if JITMethod.allCases.count > 1 {
-                Picker("Method", selection: $jitMethod) {
-                    ForEach(JITMethod.allCases) { method in
-                        Text(method.title).tag(method.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-            if selectedMethod == .builtInStikJIT {
-                Button {
-                    jit.showingSetup = true
-                } label: {
-                    LabeledContent {
-                        Text(jit.isPaired ? "Paired" : "Not Set Up")
-                    } label: {
-                        Label("Set Up JIT", systemImage: "checklist")
-                    }
-                }
-            }
-            if selectedMethod != .sideloadly {
-                Toggle("Turn on JIT when crate opens", isOn: $jitAtLaunch)
-            }
             Picker("Code region", selection: $codeRegionMB) {
                 ForEach(CodeRegion.choices, id: \.self) { mb in
                     Text("\(mb) MB").tag(mb)
@@ -99,7 +61,7 @@ struct SettingsScreen: View {
         case .on(let mb): "On, \(mb) MB code region"
         case .off where jit.isOn: "Pretending On"
         case .off: "Off"
-        case .failed: "Didn't Work"
+        case .failed: "Couldn't Claim Code Region"
         }
     }
 
@@ -112,21 +74,10 @@ struct SettingsScreen: View {
         }
     }
 
-    private var selectedMethod: JITMethod {
-        JITMethod(rawValue: jitMethod) ?? .standard
-    }
-
     private var jitFooter: String {
         var parts: [String] = []
         if let problem = jit.problem { parts.append(problem) }
-        switch selectedMethod {
-        case .builtInStikJIT:
-            parts.append("Built-in StikJIT needs this iPhone paired with crate and LocalDevVPN connected. Set Up JIT walks through both.")
-        case .stikDebug:
-            parts.append("StikDebug opens, asks you to confirm, then brings you back to crate.")
-        case .sideloadly:
-            parts.append("Connect this iPhone to Windows and use Sideloadly's Enable JIT action for crate. Sideloadly lists JIT support through iOS 16.")
-        }
+        parts.append("On iOS 16, install crate with SideStore and use SideStore's Enable JIT action for crate. Return to crate to check the debugger attachment.")
         parts.append("crate needs JIT to run a VM. The code region is the memory set aside for translated code, claimed once per launch, so a change applies the next time crate opens.")
         return parts.joined(separator: "\n\n")
     }

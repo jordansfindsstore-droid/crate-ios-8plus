@@ -4,7 +4,7 @@
 
 import UIKit
 
-/// What crate did: JIT, pairing, and the engine's own lines, kept in
+/// What crate did: JIT and the engine's own lines, kept in
 /// `Library/Caches/crate.log` (a phone's unified log can't be read from a Mac, a
 /// file can) and shared by Settings > Export Logs.
 ///
@@ -100,12 +100,11 @@ enum AppLog {
     }
 
     /// Whether crate is logging: Settings > Logs, as it was at launch or
-    /// since. The VM's console and idevice keep their own logs only while it is.
+    /// since. The VM's console keeps its own log only while crate is running.
     static var isOn: Bool { enabled }
 
     /// The rest of what crate keeps of what happened: the copies Export Logs
-    /// made to share (LogExport), the VM's console output (ConsoleBridge) and
-    /// idevice's pairing messages (OnDevicePairing).
+    /// made to share (LogExport) and the VM's console output (ConsoleBridge).
     private static func removeOtherLogs() {
         let files = FileManager.default
         let temporary = files.temporaryDirectory
@@ -114,7 +113,6 @@ enum AppLog {
             try? files.removeItem(at: file)
         }
         try? files.removeItem(at: ConsoleBridge.logURL)
-        try? files.removeItem(at: OnDevicePairing.logURL)
     }
 
     static func write(_ line: String) {
