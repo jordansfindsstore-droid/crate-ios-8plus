@@ -1,37 +1,47 @@
 # Installing crate on iOS 16
 
-This iPhone 8 Plus port targets iOS 16.0 and is built as an unsigned IPA.
-Install and sign it from Windows with [Sideloadly](https://sideloadly.io/).
-The app's JIT helper is not included: StikJIT and StikDebug require iOS 17.4
-or later. Sideloadly documents JIT support through iOS 16.
+This iPhone 8 Plus port targets iOS 16.0 and produces an unsigned IPA. Install
+it with SideStore; SideStore signs the app with your Apple ID and enables JIT.
+No paid developer account is required. A free Apple ID's development
+provisioning expires after seven days, so refresh the app with SideStore before
+it expires.
 
-## Install and enable JIT from Windows
+## Windows 10 install and JIT
 
-1. Install Sideloadly for Windows and connect the iPhone by USB. Unlock the
-   phone, tap **Trust** if prompted, and enable Developer Mode at
-   **Settings > Privacy & Security > Developer Mode**.
-2. Drag `crate-8plus.ipa` into Sideloadly, select the iPhone, enter your Apple
-   ID, and start sideloading. If iOS asks, trust the developer profile at
-   **Settings > General > VPN & Device Management**. A free Apple ID signature
-   expires after seven days and must be refreshed.
-3. Keep the iPhone connected. From Sideloadly's tray/daemon menu, choose its
-   **Enable JIT** action and select crate. Sideloadly says this opens the app
-   and enables JIT. Enable JIT again after crate exits or the phone reboots;
-   JIT does not persist across launches.
+1. Install Apple's [iTunes for Windows](https://www.apple.com/itunes/) and
+   [iloader](https://github.com/nab138/iloader/releases). The iloader project
+   documents iTunes as its Windows USB device service and lists SideStore
+   installation as a supported action. Only download iloader from its
+   [official site](https://iloader.app) or
+   [GitHub releases](https://github.com/nab138/iloader/releases).
+2. Connect the iPhone by USB, unlock it, and trust the computer if prompted.
+   In iloader, choose its SideStore install action and follow
+   [SideStore's setup](https://docs.sidestore.io/), including any pairing or
+   Apple ID steps it requests.
+3. SideStore documents LocalDevVPN as part of its remote-debug integration.
+   Install LocalDevVPN separately from its official App Store distribution and
+   follow SideStore's setup instructions. Use it only as a personal-use
+   external app: this project does not bundle, modify, or redistribute it.
+4. Download the `crate-8plus.ipa` artifact from the repository's **iOS 16 IPA**
+   Actions run. In SideStore, install that IPA and let SideStore finish signing
+   and installing it. The unsigned IPA itself is not a ready-to-install signed
+   app.
+5. In SideStore, use **Enable JIT** for crate. Return to crate; it checks the
+   debugger attachment again when it comes to the foreground. If the VM screen
+   still says JIT is off, use **Check JIT Status**.
 
-The app uses conservative defaults for the iPhone 8 Plus: a 2 GB VM memory
-limit, at most two guest CPUs, and 2D graphics. iOS may still terminate a VM
-under memory pressure. A physical iPhone 8 Plus/iOS 16.7.16 installation and
-JIT session have not yet been tested.
-
-This unsigned build does not carry a provisioning profile or a device-tested
-signature. Sideloadly signs it for your Apple ID during installation; the
-available memory entitlements depend on your signing setup and may not be
-granted. Start with a 1–2 GB VM either way.
+SideStore is AGPL-3.0 and iloader is MIT; both are separate tools, not app
+dependencies and not included in the IPA. iTunes, Apple's signing service,
+macOS, and Xcode are also external Apple requirements and are not bundled or
+redistributed here. See [docs/PROVENANCE.md](docs/PROVENANCE.md).
 
 ## Build artifact
 
-The private repository's **iOS 16 IPA** GitHub Actions workflow builds
-`crate-8plus.ipa` on `macos-latest` with XcodeGen and Xcode, with code signing
-disabled. The artifact is not a ready-to-install signed app. The workflow
-checks the package's app metadata, minimum iOS version, and arm64 architecture.
+The `ipa` GitHub Actions workflow builds `crate-8plus.ipa` on a hosted macOS
+runner with Xcode and XcodeGen, with code signing disabled. It checks the
+version, minimum iOS version, and arm64 architecture. The artifact is
+unsigned; it has no provisioning profile or device-tested signature.
+
+The iPhone 8 Plus and iOS 16.7.16 have not been physically tested with this
+port. See [docs/IOS16_PORT.md](docs/IOS16_PORT.md) for what is verified from
+source and what still needs a device test.

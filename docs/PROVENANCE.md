@@ -3,18 +3,17 @@
 Everything the app ships besides its own code, where each piece comes from, and
 how it gets into `Frameworks/`. Nothing there is committed: the scripts in
 `Scripts/` fetch or build it, pinned to a version and checked against a SHA-256
-or a commit. The built frameworks are published as this repository's
-frameworks release, which `fetch-frameworks.sh` fetches; the build scripts make
-the same files. crate's own code is MPL-2.0 ([LICENSE](../LICENSE)); each piece
-below keeps its own license, and
+or a commit. The frameworks are published as a checksum-pinned release;
+`fetch-frameworks.sh` defaults to the upstream crate-ios release, and can be
+pointed at this fork's release with `FRAMEWORKS_REPOSITORY`. The build scripts
+make the same files from source. crate's own code is MPL-2.0
+([LICENSE](../LICENSE)); each piece below keeps its own license, and
 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) has every license's text,
 down to the Rust libraries.
 
 | Piece | Version | License | From | How |
 | --- | --- | --- | --- | --- |
 | [crate](https://github.com/oneamendez/crate) | v0.1.1 | MPL-2.0 | its release, attested | `fetch-crate.sh`, or `build-crate.sh` from a checkout |
-| [StikJIT](https://github.com/StikDebug/StikJIT) | 2.0.1 | MPL-2.0 | its release's framework | `fetch-stikjit.sh` |
-| [idevice](https://github.com/jkcoxson/idevice) | 0.1.68 | MIT | its source | `build-idevice.sh`, one patch |
 | [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) | 1.18.0 | MIT | Swift package | Xcode |
 | [libslirp](https://gitlab.freedesktop.org/slirp/libslirp) | 4.9.7 | BSD-3-Clause | its release's source | `build-slirp.sh` |
 | [GLib](https://gitlab.gnome.org/GNOME/glib) | 2.90.1 | LGPL-2.1-or-later | its release's source | `build-slirp.sh`, unmodified, a dynamic framework |
@@ -31,8 +30,8 @@ names; SPIRV-Cross, SPIRV-Tools, SPIRV-Headers, cereal and the Vulkan headers
 end up in MoltenVK.framework (Apache-2.0, MIT and BSD-3-Clause). ANGLE's gclient
 checkout does the same for what ANGLE links: Abseil, astc-encoder, LLVM's libc,
 SPIRV-Tools, SPIRV-Headers, the Vulkan headers, Vulkan Memory Allocator and zlib
-(Apache-2.0, MIT and Zlib). crate links seven small Rust libraries and idevice
-about two hundred, all MIT, Apache-2.0, BSD, ISC or similar.
+(Apache-2.0, MIT and Zlib). crate's Rust libraries are listed in
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
 
 GLib is LGPL: it stays its own framework, unmodified, so it can be replaced,
 and its source is its release's tarball, which `build-slirp.sh` downloads and
@@ -41,13 +40,22 @@ MPL-2.0.
 
 ## Not in the app
 
-crate works with these, but doesn't carry them:
+These are installed separately; none is built into or redistributed with
+crate:
 
-- [StikDebug](https://github.com/StikDebug/StikDebug), the app that can turn
-  crate's JIT on. crate asks for it the way StikDebug's legacy.js script
-  expects; its built-in JIT is StikJIT, from the same project, above.
-- [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044), the tunnel the
-  built-in StikJIT reaches the iPhone's debugging service through.
+- [SideStore](https://github.com/SideStore/SideStore) (AGPL-3.0), used to
+  install crate and enable JIT on iOS 16; its iOS 16 source path is documented
+  in [IOS16_PORT.md](IOS16_PORT.md).
+- [iloader](https://github.com/nab138/iloader) (MIT), an optional Windows
+  installer for SideStore. Its README lists iTunes as the Windows USB device
+  service; neither tool is bundled.
+- [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044), which
+  SideStore documents as part of its remote-debug integration. Use it only as
+  a separately installed personal-use app. This project does not bundle,
+  modify, or redistribute it.
+- Apple's macOS, Xcode, signing service, and iTunes for Windows are external,
+  closed-source build or installation requirements; this project does not
+  bundle or redistribute them.
 - The guest images, from
   [arm64-desktop-images](https://github.com/oneamendez/arm64-desktop-images):
   downloaded when installing a VM, never part of the app. Each distribution
@@ -57,8 +65,6 @@ crate works with these, but doesn't carry them:
 
 In `Scripts/patches/`, each with a header saying what it changes and why:
 
-- `idevice-pairable-host.patch`: lets crate advertise itself as a computer the
-  iPhone pairs with, for Set Up JIT's on-device pairing.
 - `angle-vulkan.patch`: ANGLE's Vulkan backend inside an iOS app, on MoltenVK.
   Written for aTerm, the app crate succeeds, and carried over unchanged.
 - `libepoxy-ios-angle.patch`: libepoxy's EGL support on an iPhone, opening

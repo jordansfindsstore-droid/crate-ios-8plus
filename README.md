@@ -14,9 +14,9 @@
 
 <p align="center"><i>Ubuntu with GNOME, landscape on an iPhone Duo.</i></p>
 
-> **iOS 16 port for iPhone 8 Plus:** This private fork targets iOS 16 and uses
-> Sideloadly for JIT. See [INSTALL.md](INSTALL.md) for Windows steps. The
-> iPhone 8 Plus has not yet been device-tested with this port.
+> **iOS 16 port for iPhone 8 Plus:** This MPL-2.0 fork targets iOS 16 and uses
+> SideStore for installation and JIT. See [INSTALL.md](INSTALL.md) for the
+> Windows 10 workflow. The iPhone 8 Plus has not yet been device-tested.
 
 ## Why crate
 
@@ -66,16 +66,16 @@ Linux images of your own, and other operating systems.
   [Known issues](#known-issues))
 - iPhone Duo layouts that follow the fold
 - The VM's serial console, a tab away from its desktop
-- JIT enabled externally with Sideloadly on iOS 16
+- JIT enabled externally with SideStore on iOS 16
 - Logs to share for bug reports, kept across a crash, with memory tracking
 
 ## Install
 
 crate needs JIT, which iOS gives only to an app a debugger has attached to, so
 it can't come from the App Store. This port produces an unsigned
-`crate-8plus.ipa`; use Sideloadly on Windows to sign, install and enable JIT.
-See [INSTALL.md](INSTALL.md). The upstream built-in JIT helper and StikDebug
-are not available on iOS 16.
+`crate-8plus.ipa`; use SideStore on Windows to install it and enable JIT.
+See [INSTALL.md](INSTALL.md). SideStore, iLoader and LocalDevVPN are separate
+tools: none is bundled, modified or redistributed here.
 
 ## Gallery
 
@@ -143,13 +143,11 @@ Three tabs:
 
 ## JIT
 
-On this iOS 16 port, Sideloadly enables JIT from its Windows tray/daemon menu
-while the iPhone is connected. Enable JIT again after crate exits or the
-device restarts. The built-in StikJIT helper and StikDebug require iOS 17.4 or
-later and are not included as iOS 16 options. See [INSTALL.md](INSTALL.md).
-
-Each launch logs its JIT steps to `Library/Caches/crate.log`, and pairing's
-messages to `Library/Caches/idevice.log`.
+On iOS 16, use SideStore's **Enable JIT** action for crate. Crate checks for the
+debugger at launch and again when it returns to the foreground, then claims and
+tests its JIT code region. JIT does not persist across app launches or device
+restarts. The static source verification, including why `brk #0x69` is not
+used on iOS 16, is in [docs/IOS16_PORT.md](docs/IOS16_PORT.md).
 
 ## The engine
 
@@ -203,8 +201,7 @@ own GL messages; with `CRATE_LOG=debug`, its debug lines.
 The libraries go into `Frameworks/`, which isn't committed. Fetch them, each
 pinned to a release and checked against its SHA-256:
 
-    ./Scripts/fetch-frameworks.sh  # idevice, libslirp and GLib, the GPU stack
-    ./Scripts/fetch-stikjit.sh     # StikJIT 2.0.1
+    ./Scripts/fetch-frameworks.sh  # libslirp, GLib and the GPU stack
     ./Scripts/fetch-crate.sh       # crate v0.1.1
     xcodegen generate
     open Crate.xcodeproj
@@ -232,9 +229,10 @@ once, build crate from a checkout instead of fetching it:
 
 The frameworks release is these scripts' output; build them to change one, and
 publish a new release with `./Scripts/release-frameworks.sh TAG`, then pin the
-`VERSION` and `SHA256` it prints in `fetch-frameworks.sh`:
+`FRAMEWORKS_REPOSITORY`, `VERSION` and `SHA256` it prints in
+`fetch-frameworks.sh`. Until a fork release is published, that fetch script
+uses the checksum-pinned upstream bundle:
 
-    ./Scripts/build-idevice.sh     # idevice v0.1.68 from source; needs Rust
     ./Scripts/build-slirp.sh       # libslirp 4.9.7 and GLib 2.90.1; needs meson
     ./Scripts/build-moltenvk.sh    # MoltenVK 1.4.2; about 15 minutes
     ./Scripts/build-angle.sh       # ANGLE; a 4 GB checkout, ANGLE_SRC reuses one
@@ -247,8 +245,10 @@ skips itself.
 
 ### IPA
 
-The `ipa` workflow builds an unsigned IPA from the same pinned libraries: run
-by hand it's a workflow artifact, and a version tag (`vX.Y`) makes it a release.
+The `ipa` workflow builds an unsigned IPA on a hosted macOS runner: run by hand
+it's a workflow artifact, and a version tag (`vX.Y`) makes it a release. It
+builds the crate engine and network frameworks from pinned source; GPU
+frameworks are optional and can be fetched or built separately.
 `./Scripts/build-ipa.sh` builds the same IPA on a Mac. `Scripts/sign-ipa.sh`
 signs it with your own certificate and profiles under your bundle ID, as
 [INSTALL.md](INSTALL.md) describes, and can install it:
@@ -256,8 +256,9 @@ signs it with your own certificate and profiles under your bundle ID, as
     BUNDLE_ID=com.you.crate ./Scripts/sign-ipa.sh crate-unsigned.ipa                # crate-signed.ipa beside it
     BUNDLE_ID=com.you.crate ./Scripts/sign-ipa.sh crate-unsigned.ipa --install UDID
 
-Both bundles get `get-task-allow`, which turning JIT on needs, and the app the
-two memory entitlements when its profile grants them. Unset, `BUNDLE_ID` is
+The app gets `get-task-allow`, which SideStore's debugger attachment needs,
+and the two memory entitlements when its profile grants them. A free Apple ID
+can sign the app; no paid developer account is required. Unset, `BUNDLE_ID` is
 this project's own, `com.amendez.crate`.
 
 ## Known issues
@@ -280,8 +281,6 @@ crate's own code is [MPL-2.0](LICENSE), like the
 [crate engine](https://github.com/oneamendez/crate): changes to crate's files
 stay open, and it can be combined with code under other licenses. What the app
 carries from other projects keeps its own license:
-[StikJIT](https://github.com/StikDebug/StikJIT) (MPL-2.0),
-[idevice](https://github.com/jkcoxson/idevice) and
 [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) (MIT),
 [libslirp](https://gitlab.freedesktop.org/slirp/libslirp) (BSD-3-Clause),
 [GLib](https://gitlab.gnome.org/GNOME/glib) (LGPL-2.1-or-later, kept as its own
@@ -291,7 +290,18 @@ replaceable framework), [MoltenVK](https://github.com/KhronosGroup/MoltenVK)
 [virglrenderer](https://gitlab.freedesktop.org/virgl/virglrenderer) (MIT), and
 what they in turn are built from. [docs/PROVENANCE.md](docs/PROVENANCE.md) says
 where each comes from and how it's built, and
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) has every license's text
-(`Scripts/third-party-notices.py` writes it). JIT is turned on with
-[StikDebug](https://github.com/StikDebug/StikDebug)'s convention, and the VM
-images are each distribution's own, under their licenses.
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) has every shipped dependency's
+license text (`Scripts/third-party-notices.py` writes it). SideStore is AGPL-3.0
+and iLoader is MIT; both are external, separately installed tools. LocalDevVPN
+is also external and is not included or redistributed. The VM images are each
+distribution's own, under their licenses.
+
+## External requirements
+
+The app and its shipped dependencies are open source. Building requires
+Apple's macOS and Xcode; the iOS IPA workflow uses a hosted macOS/Xcode runner.
+Installing and signing require Apple's signing service and an Apple ID, and the
+Windows 10 iLoader path uses Apple's [iTunes for Windows](https://www.apple.com/itunes/)
+for USB device communication.
+These Apple products/services are closed source, are not bundled, and are not
+redistributed by this project. A paid Apple developer account is not required.

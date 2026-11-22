@@ -67,8 +67,7 @@ body:
     attributes:
       label: How JIT was turned on
       options:
-        - Built-in StikJIT
-        - StikDebug
+        - SideStore
         - It didn't turn on
     validations:
       required: true
