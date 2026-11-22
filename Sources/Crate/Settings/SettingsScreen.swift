@@ -161,7 +161,7 @@ struct SettingsScreen: View {
         if memory.available == nil {
             return "The Simulator has no memory limit, so iOS reports nothing here. On an iPhone these come from iOS and update every few seconds."
         }
-        return "A VM's memory comes out of the available memory, up to the limit iOS sets. The increased-memory-limit entitlement raises the limit."
+        return "A VM's memory comes out of the available memory, up to the limit iOS sets. The increased-memory-limit entitlement raises the limit; iOS doesn't report whether it was granted."
     }
 
     /// Re-reads the figures every few seconds while Settings is on screen.
