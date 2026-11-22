@@ -136,7 +136,7 @@ struct SettingsScreen: View {
     private var memorySection: some View {
         Section {
             LabeledContent("Increased limit",
-                           value: memory.hasIncreasedLimit ? "Yes" : "No")
+                           value: memory.hasIncreasedLimit.map { $0 ? "Yes" : "No" } ?? "Unknown")
             LabeledContent("Memory limit") {
                 Text(memory.limit.map { Format.memory($0) } ?? "Not reported")
                     .monospacedDigit()

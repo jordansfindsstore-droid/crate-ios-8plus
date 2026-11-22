@@ -7,10 +7,8 @@ import os
 
 /// What iOS lets Crate have, read fresh each time one is made.
 struct MemoryReport {
-    /// STUB: whether the build carries the increased-memory-limit entitlement.
-    /// iOS has no public call that reads a process's own entitlements, and this
-    /// project always asks for it (project.yml), so the answer is fixed for now.
-    let hasIncreasedLimit = true
+    /// iOS does not expose a public API for reading a process's own entitlements.
+    let hasIncreasedLimit: Bool? = nil
 
     /// RAM in the device.
     let physical: UInt64
