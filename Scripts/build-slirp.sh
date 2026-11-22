@@ -49,6 +49,12 @@ mkdir -p "$WORK"
 tar -xf "$SRC/glib-$GLIB_VERSION.tar.xz" -C "$WORK"
 tar -xf "$SRC/libslirp-v$SLIRP_VERSION.tar.gz" -C "$WORK"
 
+# iOS does not expose pipe2() in the public SDK header even when the
+# cross-detection reports the Darwin syscall. GLib's portable pipe/fcntl
+# fallback is sufficient and avoids a declaration/link mismatch.
+sed -i.bak 's/^#ifdef HAVE_PIPE2$/#if 0 \/\* pipe2 unavailable on iPhoneOS \*\/\//' \
+    "$WORK/glib-$GLIB_VERSION/glib/glib-unixprivate.h"
+
 # The meson cross file for one platform: iphoneos or iphonesimulator.
 cross_file() {
     local sdk="$1" subsystem target sysroot clang
