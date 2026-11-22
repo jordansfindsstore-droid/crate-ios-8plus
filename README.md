@@ -14,6 +14,10 @@
 
 <p align="center"><i>Ubuntu with GNOME, landscape on an iPhone Duo.</i></p>
 
+> **iOS 16 port for iPhone 8 Plus:** This private fork targets iOS 16 and uses
+> Sideloadly for JIT. See [INSTALL.md](INSTALL.md) for Windows steps. The
+> iPhone 8 Plus has not yet been device-tested with this port.
+
 ## Why crate
 
 - **A real computer in your pocket.** Not a remote desktop or a cloud VM:
@@ -62,19 +66,16 @@ Linux images of your own, and other operating systems.
   [Known issues](#known-issues))
 - iPhone Duo layouts that follow the fold
 - The VM's serial console, a tab away from its desktop
-- JIT from crate's built-in StikJIT, or from StikDebug
+- JIT enabled externally with Sideloadly on iOS 16
 - Logs to share for bug reports, kept across a crash, with memory tracking
 
 ## Install
 
 crate needs JIT, which iOS gives only to an app a debugger has attached to, so
-it can't come from the App Store. Each
-[release](https://github.com/oneamendez/crate-ios/releases) has an unsigned
-IPA instead, which you sign with your own Apple account and install from a Mac;
-JIT is then turned on by crate's built-in StikJIT or by StikDebug (see
-[JIT](#jit)). [INSTALL.md](INSTALL.md) has the steps, and a request to paste
-into Claude Code, which does them for you. crate is developed on an iPhone Duo
-with iOS 27.1.
+it can't come from the App Store. This port produces an unsigned
+`crate-8plus.ipa`; use Sideloadly on Windows to sign, install and enable JIT.
+See [INSTALL.md](INSTALL.md). The upstream built-in JIT helper and StikDebug
+are not available on iOS 16.
 
 ## Gallery
 
@@ -142,23 +143,10 @@ Three tabs:
 
 ## JIT
 
-crate claims its code region at launch, or once a debugger arrives: mapped
-executable, authorized by the debugger on `brk #0x69` (StikDebug's legacy.js
-convention), then mapped again for writing, and test-run. Two ways to get the
-debugger, picked in Settings:
-
-- **StikDebug**: crate opens `stikdebug://enable-jit` with its pid and
-  legacy.js; StikDebug attaches and comes back.
-- **Built-in StikJIT**: a helper extension (`Sources/JITHelper`) runs
-  [StikJIT](https://github.com/StikDebug/StikJIT) (MPL-2.0) through
-  LocalDevVPN's tunnel. Set Up JIT pairs the iPhone with crate itself on iOS 27
-  (or takes a pairing file), with [idevice](https://github.com/jkcoxson/idevice)
-  (MIT), built from source with one patch (`Scripts/patches`).
-
-The private iOS 16 / iPhone 8 Plus port omits the built-in helper (StikJIT
-requires iOS 17.4+) and uses Sideloadly's external JIT action on Windows.
-StikDebug also requires iOS 17.4+, so it is not an iOS 16 option. See
-[INSTALL.md](INSTALL.md).
+On this iOS 16 port, Sideloadly enables JIT from its Windows tray/daemon menu
+while the iPhone is connected. Enable JIT again after crate exits or the
+device restarts. The built-in StikJIT helper and StikDebug require iOS 17.4 or
+later and are not included as iOS 16 options. See [INSTALL.md](INSTALL.md).
 
 Each launch logs its JIT steps to `Library/Caches/crate.log`, and pairing's
 messages to `Library/Caches/idevice.log`.
