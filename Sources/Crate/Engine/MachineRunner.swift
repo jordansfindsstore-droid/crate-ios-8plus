@@ -143,7 +143,7 @@ final class MachineRunner: ObservableObject {
             // A core left for the app and iOS.
             let cores = ProcessInfo.processInfo.activeProcessorCount
             let lowMemoryCoreLimit = ProcessInfo.processInfo.physicalMemory < 4 * 1024 * 1024 * 1024 ? 2 : cores
-            cpus = max(1, min(vm.cpuCount, lowMemoryCoreLimit, cores - 1))
+            cpus = max(1, min(vm.cpuCount, min(lowMemoryCoreLimit, cores - 1)))
             memoryMiB = Self.memory(askedGB: vm.memoryGB)
             kernel = files.kernel.path
             initrd = files.initrd.path
@@ -180,7 +180,7 @@ final class MachineRunner: ObservableObject {
             let headroom = lowMemory ? 1024 : 768
             let fits = max(1024, (available - headroom) / 2 * 2)
             let physicalLimit = lowMemory ? 2048 : asked
-            return min(asked, fits, physicalLimit)
+            return min(asked, min(fits, physicalLimit))
         }
 
         /// For a VM put on the iPhone by hand from aTerm's image, which has no
