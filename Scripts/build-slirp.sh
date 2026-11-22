@@ -110,15 +110,15 @@ for sdk in iphoneos iphonesimulator; do
         -Ddocumentation=false -Dsysprof=disabled -Ddtrace=disabled -Dsystemtap=disabled \
         -Dglib_debug=disabled -Dlibelf=disabled \
         -Dpcre2:default_library=static -Dlibffi:default_library=static \
-        -Dproxy-libintl:default_library=static >/dev/null
-    meson compile -C "$WORK/$sdk/glib" >/dev/null
-    meson install -C "$WORK/$sdk/glib" >/dev/null
+        -Dproxy-libintl:default_library=static
+    meson compile -C "$WORK/$sdk/glib"
+    meson install -C "$WORK/$sdk/glib"
 
     echo "==> libslirp $SLIRP_VERSION for $sdk"
     meson setup "$WORK/$sdk/slirp" "$WORK/libslirp-v$SLIRP_VERSION" --cross-file "$cross" \
-        --prefix "$prefix" --buildtype release --default-library shared >/dev/null
-    meson compile -C "$WORK/$sdk/slirp" >/dev/null
-    meson install -C "$WORK/$sdk/slirp" >/dev/null
+        --prefix "$prefix" --buildtype release --default-library shared
+    meson compile -C "$WORK/$sdk/slirp"
+    meson install -C "$WORK/$sdk/slirp"
 done
 
 # A dylib as a framework: the binary under the framework's name, an @rpath
