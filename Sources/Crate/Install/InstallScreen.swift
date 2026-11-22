@@ -15,7 +15,7 @@ struct InstallScreen: View {
 
     @State private var catalog = CatalogState.loading
     @State private var selectedID: String?
-    @AppStorage(SettingsKey.installMemoryGB) private var memoryGB = 6
+    @AppStorage(SettingsKey.installMemoryGB) private var memoryGB = 2
     /// The size last picked, which may not be one this image or device offers:
     /// `diskGB` is the one that's used.
     @AppStorage(SettingsKey.installDiskGB) private var pickedDiskGB = DiskSize.standard
@@ -23,7 +23,7 @@ struct InstallScreen: View {
     @State private var confirmingCancel = false
 
     /// The memory limits a VM can have, here and in its settings.
-    static let memoryChoices = [2, 4, 6, 8, 10, 12]
+    static let memoryChoices = [1, 2, 3, 4]
 
     /// The disk sizes the slider stops at, for the selected image.
     private var diskStops: [Int] {
@@ -351,7 +351,7 @@ struct InstallScreen: View {
 enum DiskSize {
     /// Finer where a few GB matter, coarser where they don't.
     static let allStops = [16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]
-    static let standard = 32
+    static let standard = 16
     /// Room for the guest to write beyond the image's own filesystem, at least.
     static let headroomGB = 8
 

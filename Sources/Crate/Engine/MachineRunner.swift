@@ -141,7 +141,9 @@ final class MachineRunner {
 
         init(vm: Machine, files: GuestFiles, display: DisplayBridge) {
             // A core left for the app and iOS.
-            cpus = max(1, min(vm.cpuCount, ProcessInfo.processInfo.activeProcessorCount - 1))
+            let cores = ProcessInfo.processInfo.activeProcessorCount
+            let lowMemoryCoreLimit = ProcessInfo.processInfo.physicalMemory < 4 * 1024 * 1024 * 1024 ? 2 : cores
+            cpus = max(1, min(vm.cpuCount, lowMemoryCoreLimit, cores - 1))
             memoryMiB = Self.memory(askedGB: vm.memoryGB)
             kernel = files.kernel.path
             initrd = files.initrd.path
@@ -174,9 +176,11 @@ final class MachineRunner {
             let asked = askedGB * 1024
             let available = Int(os_proc_available_memory() >> 20)
             guard available > 0 else { return asked }
-            let headroom = 768
+            let lowMemory = ProcessInfo.processInfo.physicalMemory < 4 * 1024 * 1024 * 1024
+            let headroom = lowMemory ? 1024 : 768
             let fits = max(1024, (available - headroom) / 2 * 2)
-            return min(asked, fits)
+            let physicalLimit = lowMemory ? 2048 : asked
+            return min(asked, fits, physicalLimit)
         }
 
         /// For a VM put on the iPhone by hand from aTerm's image, which has no
@@ -203,7 +207,8 @@ final class MachineRunner {
         #if targetEnvironment(simulator)
         static let gpu = CRATE_GPU_2D
         #else
-        static let gpu = CRATE_GPU_VIRGL
+        static let gpu = ProcessInfo.processInfo.physicalMemory < 4 * 1024 * 1024 * 1024
+            ? CRATE_GPU_2D : CRATE_GPU_VIRGL
         #endif
     }
 

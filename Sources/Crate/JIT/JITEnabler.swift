@@ -23,6 +23,10 @@ extension JITSession {
         case .stikDebug:
             asked = await askStikDebug()
         case .builtInStikJIT:
+            if #unavailable(iOS 17.4) {
+                fail("Built-in StikJIT requires iOS 17.4 or later. Use StikDebug on iOS 16.")
+                return
+            }
             asked = await askBuiltIn(interactive: interactive,
                                      waitForVPN: waitForVPN ?? (interactive ? .seconds(3) : .seconds(8)))
         }

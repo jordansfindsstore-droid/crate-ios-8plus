@@ -58,7 +58,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 ARGS=()
 for target in $TARGETS; do
-    (cd "$SRC" && IPHONEOS_DEPLOYMENT_TARGET=18.0 cargo rustc --quiet --release --locked \
+    (cd "$SRC" && IPHONEOS_DEPLOYMENT_TARGET=16.0 cargo rustc --quiet --release --locked \
         -p idevice-ffi --no-default-features --features "$FEATURES" \
         --crate-type staticlib --target "$target")
     mkdir -p "$WORK/$target"

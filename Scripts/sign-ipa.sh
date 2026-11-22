@@ -3,13 +3,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# Sign crate's unsigned IPA (a release's crate-unsigned.ipa, or
+# Sign crate's unsigned IPA (a release's crate-8plus.ipa, or
 # Scripts/build-ipa.sh's) with your own Apple development certificate and
 # provisioning profiles, and optionally install it on an iPhone. INSTALL.md
 # walks through it. Needs nothing else from this repository.
 #
-#     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-unsigned.ipa                 # writes crate-signed.ipa beside it
-#     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-unsigned.ipa --install UDID  # and installs it
+#     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-8plus.ipa                 # writes crate-signed.ipa beside it
+#     BUNDLE_ID=com.you.crate ./sign-ipa.sh crate-8plus.ipa --install UDID  # and installs it
 #
 # BUNDLE_ID is the app's bundle ID under your team (com.amendez.crate, this
 # project's, if unset); the JIT helper inside it becomes BUNDLE_ID.jithelper.

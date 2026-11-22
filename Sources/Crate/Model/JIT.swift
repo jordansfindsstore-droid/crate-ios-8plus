@@ -11,6 +11,8 @@ enum JITMethod: String, CaseIterable, Identifiable {
 
     var id: Self { self }
 
+    static var allCases: [JITMethod] { [.stikDebug] }
+
     var title: String {
         switch self {
         case .builtInStikJIT: "Built-in StikJIT"
@@ -18,7 +20,7 @@ enum JITMethod: String, CaseIterable, Identifiable {
         }
     }
 
-    static let standard = Self.builtInStikJIT
+    static let standard = Self.stikDebug
 }
 
 /// The settings Crate keeps in UserDefaults, by key, so every `@AppStorage`

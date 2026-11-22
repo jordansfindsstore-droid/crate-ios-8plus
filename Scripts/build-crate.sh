@@ -32,6 +32,6 @@ for target in aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin; do
 done
 
 mkdir -p "$REPO/Frameworks"
-"$CRATE_DIR/tools/xcframework.sh" "$REPO/Frameworks/Crate.xcframework" >/dev/null
+IPHONEOS_DEPLOYMENT_TARGET=16.0 "$CRATE_DIR/tools/xcframework.sh" "$REPO/Frameworks/Crate.xcframework" >/dev/null
 echo "$VERSION" > "$REPO/Frameworks/Crate.version"
 echo "crate $VERSION in Frameworks/"

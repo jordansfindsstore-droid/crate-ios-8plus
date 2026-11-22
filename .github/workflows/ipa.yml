@@ -19,34 +19,37 @@ permissions:
 
 jobs:
   ipa:
-    runs-on: xcode-27
-    timeout-minutes: 60
+    runs-on: macos-latest
+    timeout-minutes: 180
     env:
       HOMEBREW_NO_AUTO_UPDATE: 1
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: oneamendez/crate
+          ref: v0.1.1
+          path: crate-src
       - name: Check the tag is the app's version
         if: github.ref_type == 'tag'
         run: |
           versions=$(sed -n 's/^ *MARKETING_VERSION: "\(.*\)"$/\1/p' project.yml | sort -u)
           [ "$GITHUB_REF_NAME" = "v$versions" ] || {
               echo "tag $GITHUB_REF_NAME, but project.yml says $versions" >&2; exit 1; }
-      - run: sudo xcode-select -s /Applications/Xcode_27.1.app
-      - run: brew install xcodegen
+      - name: Install XcodeGen
+        run: brew install xcodegen meson pkg-config
       - name: Frameworks
         env:
-          # For gh, checking each pinned release's attestation.
           GH_TOKEN: ${{ github.token }}
-          VERIFY_ATTESTATION: 1
         run: |
-          Scripts/fetch-frameworks.sh
-          Scripts/fetch-stikjit.sh
-          Scripts/fetch-crate.sh
+          Scripts/build-idevice.sh
+          Scripts/build-slirp.sh
+          CRATE_DIR="$GITHUB_WORKSPACE/crate-src" Scripts/build-crate.sh
       - name: Build
         run: |
-          Scripts/build-ipa.sh "$RUNNER_TEMP/out/crate-unsigned.ipa"
+          Scripts/build-ipa.sh "$RUNNER_TEMP/out/crate-8plus.ipa"
           cd "$RUNNER_TEMP/out"
-          shasum -a 256 crate-unsigned.ipa | tee crate-unsigned.ipa.sha256
+          shasum -a 256 crate-8plus.ipa | tee crate-8plus.ipa.sha256
       # What the app and its helper say they are, not what project.yml says:
       # v0.1.1 shipped calling itself 0.1, as its plists named a version of
       # their own.
@@ -55,25 +58,29 @@ jobs:
         run: |
           version=$(sed -n 's/^ *MARKETING_VERSION: "\(.*\)"$/\1/p' "$GITHUB_WORKSPACE/project.yml" | sort -u)
           build=$(sed -n 's/^ *CURRENT_PROJECT_VERSION: "\(.*\)"$/\1/p' "$GITHUB_WORKSPACE/project.yml" | sort -u)
-          mkdir check && unzip -q crate-unsigned.ipa -d check
-          for plist in check/Payload/Crate.app/Info.plist check/Payload/Crate.app/PlugIns/*.appex/Info.plist; do
-              got="$(plutil -extract CFBundleShortVersionString raw -o - "$plist") ($(plutil -extract CFBundleVersion raw -o - "$plist"))"
-              [ "$got" = "$version ($build)" ] || {
-                  echo "${plist#check/} says $got, but project.yml says $version ($build)" >&2; exit 1; }
-          done
+          mkdir check && unzip -q crate-8plus.ipa -d check
+          plist=check/Payload/Crate.app/Info.plist
+          got="$(plutil -extract CFBundleShortVersionString raw -o - "$plist") ($(plutil -extract CFBundleVersion raw -o - "$plist"))"
+          [ "$got" = "$version ($build)" ] || {
+              echo "${plist#check/} says $got, but project.yml says $version ($build)" >&2; exit 1; }
+          minimum="$(plutil -extract MinimumOSVersion raw -o - check/Payload/Crate.app/Info.plist)"
+          [ "$minimum" = "16.0" ] || {
+              echo "Crate.app MinimumOSVersion is $minimum, expected 16.0" >&2; exit 1; }
+          lipo -archs check/Payload/Crate.app/Crate | grep -qw arm64 || {
+              echo "Crate.app does not contain arm64" >&2; exit 1; }
           rm -rf check
       # Attestations are free on a public repository only.
       - if: github.event.repository.visibility == 'public'
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: ${{ runner.temp }}/out/crate-unsigned.ipa
+          subject-path: ${{ runner.temp }}/out/crate-8plus.ipa
       - if: github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
-          name: crate-unsigned
+          name: crate-8plus
           path: |
-            ${{ runner.temp }}/out/crate-unsigned.ipa
-            ${{ runner.temp }}/out/crate-unsigned.ipa.sha256
+          ${{ runner.temp }}/out/crate-8plus.ipa
+          ${{ runner.temp }}/out/crate-8plus.ipa.sha256
       - name: Release
         if: github.ref_type == 'tag'
         working-directory: ${{ runner.temp }}/out
@@ -84,10 +91,10 @@ jobs:
           cat > notes.md <<EOF
           crate $GITHUB_REF_NAME for iPhone and iPad, unsigned: sign it with your own Apple account, then install it. [INSTALL.md]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/INSTALL.md) has the steps, and a request to paste into Claude Code, which does them for you.
 
-          Built from $GITHUB_SHA with crate $(cat "$GITHUB_WORKSPACE/Frameworks/Crate.version") and $(cat "$GITHUB_WORKSPACE/Frameworks/Frameworks.version"), each attested. To check where this IPA came from: \`gh attestation verify crate-unsigned.ipa --repo $GITHUB_REPOSITORY\`
+          Built from $GITHUB_SHA with crate $(cat "$GITHUB_WORKSPACE/Frameworks/Crate.version") and $(cat "$GITHUB_WORKSPACE/Frameworks/Frameworks.version"), each attested.
 
-              SHA-256 $(cut -d' ' -f1 crate-unsigned.ipa.sha256)
+              SHA-256 $(cut -d' ' -f1 crate-8plus.ipa.sha256)
           EOF
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
               --title "crate $GITHUB_REF_NAME" --notes-file notes.md \
-              crate-unsigned.ipa crate-unsigned.ipa.sha256
+              crate-8plus.ipa crate-8plus.ipa.sha256

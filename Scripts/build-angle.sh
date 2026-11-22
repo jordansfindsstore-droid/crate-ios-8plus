@@ -24,7 +24,7 @@
 set -euo pipefail
 
 REV=9addc2983b90152f628cfdaea194983b46b254bd
-MIN_IOS=18.0
+MIN_IOS=16.0
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 ANGLE="${ANGLE_SRC:-$REPO/.deps/angle}"

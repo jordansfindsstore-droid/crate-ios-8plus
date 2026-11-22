@@ -7,14 +7,14 @@
 # archive with signing off, Payload/Crate.app zipped. Anyone can then sign it
 # with their own certificate; Scripts/sign-ipa.sh does it with this team's.
 #
-#     ./Scripts/build-ipa.sh [OUT]     # default build/crate-unsigned.ipa
+#     ./Scripts/build-ipa.sh [OUT]     # default build/crate-8plus.ipa
 #
 # Needs Frameworks/ (Scripts/fetch-frameworks.sh, fetch-stikjit.sh and
 # fetch-crate.sh, or the build scripts) and XcodeGen.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="${1:-$REPO/build/crate-unsigned.ipa}"
+OUT="${1:-$REPO/build/crate-8plus.ipa}"
 mkdir -p "$(dirname "$OUT")"
 OUT="$(cd "$(dirname "$OUT")" && pwd)/$(basename "$OUT")"
 
